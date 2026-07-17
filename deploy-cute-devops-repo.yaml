@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 ---
-- name: Deploy cute-devops library as a bare git repo with treehouses layout
+- name: Deploy the local bare git repos and shared work directories
   hosts: localhost
   connection: local
   become: true
@@ -16,5 +16,21 @@
         group: devops
         owner: root
         description: "Cute DevOps Patterns! — Ansible roles + patterns. https://cute-devops.patterns.how"
+      - name: pod
+        path: /srv/repos/pod.git
+        group: devops
+        owner: root
+        description: "System deployment for devio — push to main triggers deploy@pod."
+        auto_push: true
+        remotes:
+          - name: origin
+            url: git@github.com:mkbrechtel/pod.git
+    worktrees:
+      - name: cute-devops
+        repo: /srv/repos/cute-devops.git
+        group: devops
+        owner: root
+        description: "Cute DevOps Patterns! — Ansible roles + patterns. https://cute-devops.patterns.how"
   roles:
     - role: repos
+    - role: worktrees

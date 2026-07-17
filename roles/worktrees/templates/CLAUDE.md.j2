@@ -1,0 +1,75 @@
+# {{ _wt_slug }}
+
+{{ wt.description | default('A shared work directory.') }}
+
+This is the shared **work directory** for the project. The bare git repository
+lives at `{{ _wt_repo }}`; this directory's `.git` file points at it, so you can
+run git here to **look things up** — but you cannot edit anything from here (the
+pad reports as a bare repo, so there is no working tree).
+
+## Looking things up
+
+Run git directly in this directory against the live repo:
+
+```bash
+git log --oneline -20 main              # recent history
+git branch                              # what work is in flight
+git show main:path/to/file              # read a file at a ref
+git log --oneline work/<category>/<branch>   # someone's in-progress branch
+```
+
+## Doing work → use a worktree
+
+Don't edit files here. Each piece of work gets its own worktree at
+`{{ _wt_workdir }}/<category>/<branch>` on a branch `work/<category>/<branch>`.
+
+Claude users: ask Claude to call the **`EnterWorktree`** tool (or start with
+`claude --worktree <category>/<branch>` from the CLI). Both routes go through
+`.claude/hooks/worktree-create`, which creates the worktree and its branch.
+
+The name is **`<category>/<branch>`**:
+
+- `<category>` is just a folder under this work directory grouping related work.
+  There's no allowlist — a new category folder is created on demand. This
+  project starts with: {% for c in _wt_categories %}`{{ c }}`{{ ", " if not loop.last else "" }}{% endfor %}.
+- `<branch>` is a URL slug: lowercase `a-z`/`0-9`, start with a letter, contain
+  at least one `-`, at most 40 characters — e.g. `add-dns-role`, `fix-login`.
+
+So: `feature/add-dns-role`, `fix/login-redirect`, `experiment/new-router`.
+
+### Choosing a base
+
+A new worktree's branch is always cut from **`main`**, wherever you create it
+from. That keeps unrelated work out of your branch and your eventual MR
+reviewable.
+
+Before starting, decide whether `main` is the right base for *this* work:
+
+- **Does other, unmerged work belong in it?** If your change builds on an open
+  MR or another feature branch, you want that work present. Either base the new
+  branch on it directly (pass that branch instead of `main` to
+  `git worktree add … -b …`), or start from `main` and **merge the other branch
+  in** once you're in the worktree (`git merge <branch>`).
+- **Is it independent?** Then plain `main` is right — leave it.
+
+`EnterWorktree` always gives you a `main`-based worktree, so to build on another
+branch pull it in once you're inside:
+
+```bash
+git merge work/<category>/<other-branch>
+```
+
+Prefer the smallest base that gets the job done: merging a branch in is explicit
+and visible in the log, whereas basing on it silently pulls its (possibly
+in-review) history into yours.
+
+## Who merges what
+
+Open an MR against `main`; the maintainer reviews and merges. Don't push to
+`main` from a `work/…` branch — the bare repo's hooks will reject it.
+
+See [Shared Worktrees 🌳](https://cute-devops.patterns.how/patterns/approaches/shared-worktrees) for the full pattern.
+
+<!-- Initial scaffold from osahris.cute_devops.worktrees. Once `main` has a canonical
+     copy, the reference-transaction hook syncs it into the work directory on each
+     merge and this file is no longer maintained by Ansible. -->

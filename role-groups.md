@@ -82,6 +82,7 @@ groups:
   - name: Repositories
     roles:
       - repos
+      - worktrees
   - name: Tooling
     roles:
       - ansible
