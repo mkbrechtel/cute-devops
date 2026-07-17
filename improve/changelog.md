@@ -23,6 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   opted out via per-remote `auto_push: false`
 
 ### Changed
+- Dropped the "treehouses" terminology: the `repos` role now only sets up
+  bare repos, and the shared work directory (categories, Claude worktree
+  hooks) moved to the new `worktrees` role (`worktrees`, `worktrees_base`,
+  `worktrees_default_categories`, `worktrees_with_claude_hooks`); the
+  pattern is now Shared Worktrees (`patterns/approaches/shared-worktrees.md`)
 - Relicensed from AGPL-3.0-or-later to EUPL-1.2; the
   `restic_client` and `restic_server` roles stay under
   AGPL-3.0-or-later pending consent from a co-author
