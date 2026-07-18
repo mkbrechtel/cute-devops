@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   bare repo, and an `auto_push` option that installs a `reference-transaction`
   hook mirroring branch/tag updates (including deletions) to all remotes not
   opted out via per-remote `auto_push: false`
+- New `gitflower` role: deploys gitflower — the git-based development
+  platform — from its own git repository. gitflower stays an independent
+  product promoted as part of the ecosystem; it is not integrated into
+  this collection's codebase
 
 ### Changed
 - Dropped the "treehouses" terminology: the `repos` role now only sets up
