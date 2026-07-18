@@ -1,0 +1,23 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+galaxy_info:
+  author: mkbrechtel
+  description: Machine-wide git hooks directory with extensible .d dispatch, auto-push, and check-tree validation
+  company: mkbrechtel
+  license: EUPL-1.2
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Debian
+      versions:
+        - trixie
+  galaxy_tags:
+    - git
+    - hooks
+    - development
+    - devops
+
+dependencies: []

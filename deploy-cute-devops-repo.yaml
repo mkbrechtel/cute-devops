@@ -16,7 +16,6 @@
         group: devops
         owner: root
         description: "Cute DevOps Patterns! — Ansible roles + patterns. https://cute-devops.patterns.how"
-        auto_push: true
         remotes:
           - name: github
             url: git@github.com:mkbrechtel/cute-devops.git
@@ -35,7 +34,6 @@
         group: devops
         owner: root
         description: "System deployment for devio — push to main triggers deploy@pod."
-        auto_push: true
         remotes:
           - name: origin
             url: git@github.com:mkbrechtel/pod.git
@@ -46,6 +44,7 @@
         owner: root
         description: "Cute DevOps Patterns! — Ansible roles + patterns. https://cute-devops.patterns.how"
   roles:
+    - role: git_hooks
     - role: repos
     - role: worktrees
     - role: claude_code

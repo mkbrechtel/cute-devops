@@ -1,12 +1,19 @@
 #!/bin/sh
-# This file is managed by the osahris.cute_devops.repos Ansible role!
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+# SPDX-License-Identifier: EUPL-1.2
 #
-# Auto-push: whenever a branch or tag in this bare repo changes, push the
+# This file is managed by the osahris.cute_devops.git_hooks Ansible role!
+# Installed as reference-transaction.d/50-autopush.
+#
+# Auto-push: whenever a branch or tag in this repository changes, push the
 # update on to every remote whose `remote.<name>.autopush` git config is
-# true (set via the role's `repos[].remotes` list).
+# true (set per remote, e.g. via the repos role's `repos[].remotes` list).
+# A repository with no autopush-enabled remotes makes this a no-op, so the
+# script is safe as a global hook for every repo on the machine.
 #
-# git calls this hook with the transaction state as $1 and feeds one
-# "<old-oid> <new-oid> <refname>" line per updated ref on stdin.
+# git calls the reference-transaction hook with the transaction state as
+# $1 and feeds one "<old-oid> <new-oid> <refname>" line per updated ref.
 
 [ "$1" = "committed" ] || exit 0
 

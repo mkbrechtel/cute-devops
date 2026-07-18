@@ -1,0 +1,88 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+- name: "Create global git hooks directory {{ git_hooks_dir }}"
+  ansible.builtin.file:
+    path: "{{ git_hooks_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: "Create extensible .d directories in {{ git_hooks_dir }}"
+  ansible.builtin.file:
+    path: "{{ git_hooks_dir }}/{{ item }}.d"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop: "{{ git_hooks_dotd }}"
+
+- name: "Install the hook dispatcher under every managed hook name"
+  ansible.builtin.copy:
+    src: dispatch
+    dest: "{{ git_hooks_dir }}/{{ item }}"
+    owner: root
+    group: root
+    mode: "0755"
+  loop: "{{ git_hooks_hooks }}"
+
+- name: "Install auto-push into reference-transaction.d"
+  ansible.builtin.copy:
+    src: autopush
+    dest: "{{ git_hooks_dir }}/reference-transaction.d/50-autopush"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: "Create check-tree.d directory"
+  ansible.builtin.file:
+    path: "{{ git_hooks_dir }}/check-tree.d"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: git_hooks_with_check_tree | bool
+
+- name: "Install the check-tree driver"
+  ansible.builtin.copy:
+    src: check-tree
+    dest: "{{ git_hooks_dir }}/check-tree"
+    owner: root
+    group: root
+    mode: "0755"
+  when: git_hooks_with_check_tree | bool
+
+- name: "Install the REUSE check into check-tree.d"
+  ansible.builtin.copy:
+    src: check-tree-reuse
+    dest: "{{ git_hooks_dir }}/check-tree.d/50-reuse"
+    owner: root
+    group: root
+    mode: "0755"
+  when: git_hooks_with_check_tree | bool
+
+- name: "Install the check-tree push gate into pre-receive.d"
+  ansible.builtin.copy:
+    src: pre-receive-check-tree
+    dest: "{{ git_hooks_dir }}/pre-receive.d/50-check-tree"
+    owner: root
+    group: root
+    mode: "0755"
+  when: git_hooks_with_check_tree | bool
+
+- name: "Read current system core.hooksPath"
+  ansible.builtin.command:  # noqa: command-instead-of-module
+    cmd: git config --system --get core.hooksPath
+  register: _git_hooks_current
+  failed_when: false
+  changed_when: false
+
+- name: "Point system git config core.hooksPath at {{ git_hooks_dir }}"
+  ansible.builtin.command:  # noqa: command-instead-of-module
+    cmd: "git config --system core.hooksPath {{ git_hooks_dir }}"
+  when: _git_hooks_current.stdout != git_hooks_dir
+  changed_when: true

@@ -1,0 +1,54 @@
+#!/bin/sh
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+# SPDX-License-Identifier: EUPL-1.2
+#
+# This file is managed by the osahris.cute_devops.git_hooks Ansible role!
+#
+# Generic git hook dispatcher. The same script is installed under every
+# managed hook name in the global core.hooksPath directory; it derives the
+# hook it is acting as from its own basename and runs, in order:
+#
+#   1. every executable in <hooksPath>/<hook>.d/, lexicographically
+#   2. the repository's own hooks/<hook>, if present and executable
+#
+# Step 2 keeps per-repo hooks working: with core.hooksPath set, git looks
+# only in the global directory, so the dispatcher replays the repo-local
+# hook that would otherwise be shadowed.
+#
+# For hook kinds that receive per-ref lines on stdin, the payload is read
+# once and replayed to every script. A failing script fails the hook
+# immediately (fail fast); for the gating hooks that rejects the update.
+
+hook="$(basename "$0")"
+dir="$(cd "$(dirname "$0")" && pwd)"
+
+case "$hook" in
+  pre-receive | post-receive | reference-transaction | pre-push | post-rewrite)
+    payload="$(cat)"
+    ;;
+  *)
+    payload=""
+    stdinless=1
+    ;;
+esac
+
+run() {
+  if [ -n "${stdinless:-}" ]; then
+    "$@" </dev/null
+  else
+    if [ -n "$payload" ]; then printf '%s\n' "$payload"; fi | "$@"
+  fi
+}
+
+for script in "$dir/$hook.d"/*; do
+  [ -x "$script" ] || continue
+  run "$script" "$@" || exit $?
+done
+
+repo_hook="$(git rev-parse --git-dir 2>/dev/null)/hooks/$hook"
+if [ -x "$repo_hook" ]; then
+  run "$repo_hook" "$@" || exit $?
+fi
+
+exit 0
