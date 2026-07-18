@@ -16,6 +16,12 @@
         group: devops
         owner: root
         description: "Cute DevOps Patterns! — Ansible roles + patterns. https://cute-devops.patterns.how"
+        auto_push: true
+        remotes:
+          - name: github
+            url: git@github.com:mkbrechtel/cute-devops.git
+          - name: codeberg
+            url: ssh://git@codeberg.org/mkbrechtel/cute-devops.git
       - name: pod
         path: /srv/repos/pod.git
         group: devops
