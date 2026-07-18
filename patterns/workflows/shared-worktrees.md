@@ -313,6 +313,7 @@ the project works, with no per-session bootstrapping.
 
 ## Related Patterns 🔗
 
+- [Pure Git Project Workflows 🌻](./pure-git-project-workflows.md) — the umbrella: the whole project lifecycle on git primitives, with this pattern as the "where work happens" piece.
 - [Smalltown Infrastructure 🏘️](./smalltown-infrastructure.md) — the bigger picture these repos sit in: small, legible, operable by the team you actually have.
 - [In-Tree Issues 🗂️](./in-tree-issues.md) — pair the worktree ritual with the same merge ritual for issues; both flow through `main`.
 - [Worktree Branch Shape 🪧](../../issues/worktree-branch-shape.pattern.md) — *(absorbed)* the `<category>/<branch>` discipline, now a core rule of this pattern.

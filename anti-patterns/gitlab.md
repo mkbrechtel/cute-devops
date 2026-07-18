@@ -74,7 +74,7 @@ others.
 
 ## Related 🔗
 
-- [Smalltown Infrastructure 🏘️](../patterns/approaches/smalltown-infrastructure.md) —
+- [Smalltown Infrastructure 🏘️](../patterns/workflows/smalltown-infrastructure.md) —
   the pattern this is the anti-pattern of.
 - [Don't dockerize mail servers](./dockerize-mail-servers.md) — same
   spirit: pick small, boring building blocks.
