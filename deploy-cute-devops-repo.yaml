@@ -34,3 +34,4 @@
   roles:
     - role: repos
     - role: worktrees
+    - role: claude_code

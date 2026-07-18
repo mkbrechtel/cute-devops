@@ -31,10 +31,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   platform — from its own git repository. gitflower stays an independent
   product promoted as part of the ecosystem; it is not integrated into
   this collection's codebase
+- New `claude_code` role: deploys the Claude Code worktree hooks
+  (`worktree-create`, `worktree-remove`, `require-clean`) machine-wide to
+  `/etc/claude/hooks/`, wired up via a managed-settings drop-in in
+  `/etc/claude-code/managed-settings.d/`. The hooks pick the layout by
+  location: a repo with `cute.workdir` set gets the shared
+  `<workdir>/<category>/<branch>` layout; any other checkout (e.g. a clone
+  in `$HOME`) gets worktrees under `<clone>/work/<name>`
 
 ### Changed
 - Renamed the `patterns/approaches/` category to `patterns/workflows/`
   (website nav section Approaches → Workflows, old URLs redirect)
+- `worktrees` role: no longer scaffolds `.claude/` hooks or settings into the
+  work directory (and cleans up scaffolds left by earlier versions) — the hooks
+  are machine-wide via the new `claude_code` role, so per-repo copies would
+  fire twice. `worktrees_with_claude_hooks` is gone, and the repo's own
+  tracked `.claude/` went with it
 - Dropped the "treehouses" terminology: the `repos` role now only sets up
   bare repos, and the shared work directory (categories, Claude worktree
   hooks) moved to the new `worktrees` role (`worktrees`, `worktrees_base`,

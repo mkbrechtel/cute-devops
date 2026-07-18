@@ -3,8 +3,8 @@
 {{ wt.description | default('A shared work directory.') }}
 
 Doing things by hand in the shared **work directory**. Claude users don't need
-this — `EnterWorktree` (via `.claude/hooks/worktree-create`) sets a worktree up
-for you. This is the human guide.
+this — `EnterWorktree` (via the machine-wide `/etc/claude/hooks/worktree-create`
+hook) sets a worktree up for you. This is the human guide.
 
 The bare git repository lives at `{{ _wt_repo }}`; this directory's `.git` file
 points at it, so you can run git here to **look things up**, but you cannot edit

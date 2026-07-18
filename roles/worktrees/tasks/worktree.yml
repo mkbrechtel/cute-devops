@@ -10,7 +10,6 @@
     _wt_slug: "{{ wt.name | default(wt.repo | basename | regex_replace('\\.git/?$', '')) }}"
     _wt_group: "{{ wt.group | default(worktrees_default_group) }}"
     _wt_owner: "{{ wt.owner | default(worktrees_default_owner) }}"
-    _wt_claude: "{{ wt.with_claude_hooks | default(worktrees_with_claude_hooks) }}"
     _wt_categories: "{{ wt.categories | default(worktrees_default_categories) }}"
 
 - name: "Assert wt.repo is an absolute path ending in .git: {{ _wt_repo }}"
@@ -85,6 +84,21 @@
     mode: "0644"
     force: false
 
-- name: "Set up Claude hooks in {{ _wt_workdir }}"
-  ansible.builtin.include_tasks: claude_hooks.yml
-  when: _wt_claude | bool
+# The Claude Code hooks used to be scaffolded into the pad's .claude/; they now
+# live machine-wide in /etc/claude (claude_code role). Clear out old scaffolds
+# so the same hooks don't fire twice.
+- name: "Remove per-pad Claude hook scaffolding from {{ _wt_workdir }}"
+  ansible.builtin.file:
+    path: "{{ _wt_workdir }}/.claude/{{ item }}"
+    state: absent
+  loop:
+    - hooks/worktree-create
+    - hooks/worktree-remove
+    - hooks/require-clean
+    - settings.json
+
+- name: "Drop now-empty .claude directories in {{ _wt_workdir }}"
+  ansible.builtin.command:
+    cmd: "rmdir --ignore-fail-on-non-empty {{ _wt_workdir }}/.claude/hooks {{ _wt_workdir }}/.claude"
+  changed_when: false
+  failed_when: false

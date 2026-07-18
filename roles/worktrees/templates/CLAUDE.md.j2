@@ -26,7 +26,8 @@ Don't edit files here. Each piece of work gets its own worktree at
 
 Claude users: ask Claude to call the **`EnterWorktree`** tool (or start with
 `claude --worktree <category>/<branch>` from the CLI). Both routes go through
-`.claude/hooks/worktree-create`, which creates the worktree and its branch.
+the machine-wide `WorktreeCreate` hook (`/etc/claude/hooks/worktree-create`,
+deployed by the `claude_code` role), which creates the worktree and its branch.
 
 The name is **`<category>/<branch>`**:
 
