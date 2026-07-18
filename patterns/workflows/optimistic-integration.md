@@ -15,16 +15,18 @@ An `integration/<topic>` branch **optimistically merges open work branches
 together** — before any of them has individually landed on `main`. The
 combination is testable as a whole, conflicts between in-flight branches
 surface early, and the maintainer can accept a whole basket of work with one
-merge. When the basket is ready, the integration branch gets its own
-[MR commit 💌](./mr-commits.md), and whatever follow-up the project practices
-— typically a [Merge Review 🔍](./merge-reviews.md) of the resulting merge —
-happens on the combined result instead of on each piece separately.
+merge. Review — typically a [Merge Review 🔍](./merge-reviews.md) of the
+integration merge — happens on the combined result instead of on each piece
+separately. How the basket is proposed is the project's own convention:
+commonly an [MR commit 💌](./mr-commits.md), but the pattern doesn't require
+one — plain feature branches integrate just as well, with the merge commits
+themselves as the review surface.
 
 ## Goals 🎯
 
 - Stop work-in-review from serialising: branches that build on or touch the
-  same areas are combined and exercised together while their individual MRs
-  are still open.
+  same areas are combined and exercised together while each is still in
+  flight.
 - Find inter-branch conflicts when they're written, not when the second branch
   finally merges.
 - Give the maintainer one reviewable, testable artefact — the integration
@@ -48,12 +50,15 @@ git merge work/fix/tls-defaults
 Cut `integration/<topic>` from `main`, then merge the candidate work branches
 into it. Conflicts are resolved in the integration branch's merge commits —
 that resolution work is itself content the maintainer gets to see. The
-underlying work branches are untouched and their own MRs stay open.
+underlying work branches are untouched; where they carry their own MRs, those
+stay open.
 
 ### Proposing the basket
 
-When the combination builds, tests, and reads well, mark the integration
-branch ready with an `MR:` commit describing what's inside:
+When the combination builds, tests, and reads well, the basket is ready —
+signalled however the project signals readiness. Under
+[MR Commits 💌](./mr-commits.md), that's an `MR:` commit describing what's
+inside:
 
 ```
 MR: Integrate the open work branches
@@ -63,9 +68,15 @@ work/fix/tls-defaults; resolves the shared template conflict in the
 dovecot/postfix pair.
 ```
 
-The maintainer merging `integration/<topic>` into `main` concludes the
-integration MR *and* every work-branch MR inside it — each branch's `MR:`
-commit becomes reachable from `main` through the integration merge.
+A project without the MR ritual integrates plain feature branches and lets
+review target the merge commits themselves — the basket's merges are a
+complete review surface (see [Merge Reviews 🔍](./merge-reviews.md)), so
+nothing about the pattern changes except the mark.
+
+The maintainer merging `integration/<topic>` into `main` concludes everything
+inside the basket at once. Where the branches carry `MR:` commits, each is
+concluded along the way — it becomes reachable from `main` through the
+integration merge.
 
 ### Optimism and its refunds
 
@@ -78,7 +89,7 @@ git branch -f integration/mail-stack main   # or a fresh topic name
 git merge work/feature/dovecot-role work/fix/tls-defaults
 ```
 
-The dropped branch keeps its own MR and can land later on its own. Integration
+The dropped branch is unharmed and can land later on its own. Integration
 branches carry no unique work except conflict resolutions, so rebuilding one
 is cheap; treat them as scaffolding, not as history to preserve.
 
@@ -94,8 +105,9 @@ that were never tested together.
 - An integration branch aggregates other people's work — the integrator's
   merge commits attest the combination, not the contents. Individual
   attribution stays on the work branches' own commits.
-- Gate `main` the same as always: the integration branch is proposed via its
-  MR commit and merged by the maintainer, never pushed to `main` directly.
+- Gate `main` the same as always: the integration branch is proposed by the
+  project's convention and merged by the maintainer, never pushed to `main`
+  directly.
 
 ## Anti-Patterns ⚠️
 
@@ -112,8 +124,9 @@ that were never tested together.
 
 - Name the topic after the basket's purpose (`integration/mail-stack`,
   `integration/merge-open-branches`), not after a date or a person.
-- List the merged branches in the `MR:` body so the maintainer sees the
-  basket's contents without walking the graph.
+- List the merged branches when proposing the basket — in the `MR:` body, if
+  the project uses one — so the maintainer sees the basket's contents without
+  walking the graph.
 - Run the full test suite on the integration branch — exercising the
   combination is the point.
 - Delete or archive the integration branch after it lands; the merge into
@@ -126,14 +139,16 @@ that were never tested together.
 - [ ] Cut from `main`, merge candidate work branches, resolve conflicts in the
   integration branch.
 - [ ] Test the combination.
-- [ ] `MR:` commit listing the contents; maintainer merges to `main`.
+- [ ] Signal readiness the project's way (typically an `MR:` commit listing
+  the contents); maintainer merges to `main`.
 - [ ] Clean up the integration branch afterwards.
 
 ## Related Patterns 🔗
 
 - [Pure Git Project Workflows 🌻](./pure-git-project-workflows.md) — the
   umbrella.
-- [MR Commits 💌](./mr-commits.md) — how the basket is proposed.
+- [MR Commits 💌](./mr-commits.md) — the usual way the basket is proposed;
+  optional, as ever.
 - [Merge Reviews 🔍](./merge-reviews.md) — reviewing the integration merge
   itself.
 - [Shared Worktrees 🌳](./shared-worktrees.md) — integration branches live in
