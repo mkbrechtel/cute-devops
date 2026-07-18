@@ -15,5 +15,10 @@
         group: devops
         owner: root
         description: "gitflower — a git-based development platform (FastAPI + click). https://cute-devops.patterns.how"
+        remotes:
+          - name: codeberg
+            url: ssh://git@codeberg.org/mkbrechtel/gitflower.git
+          - name: github
+            url: git@github.com:mkbrechtel/gitflower.git
   roles:
     - role: repos
