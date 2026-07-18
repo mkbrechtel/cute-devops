@@ -89,10 +89,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `claude_code` role: opt-in `trust-work-dirs` SessionStart hook
-  (`claude_code_with_trust_work_dirs`) that marks the work directory a session
-  runs in as trusted in the user's `~/.claude.json` — the fleet view refuses
-  to run worktree hooks from untrusted directories (misreported as
-  "WorktreeRemove hook failed"), which made deleting background sessions fail
+  (`claude_code_with_trust_work_dirs`) that marks the work base directories
+  (default `/work`) as trusted in the user's `~/.claude.json` — trust is
+  inherited from ancestors, so one trusted base covers every pad and worktree
+  below it. The fleet view refuses to run worktree hooks from untrusted
+  directories (misreported as "WorktreeRemove hook failed"), which made
+  deleting background sessions fail; re-seeding on every session start also
+  heals the flag when an exiting Claude Code process rewrites the config
+  from a stale snapshot (upstream anthropics/claude-code#36403)
 
 ### Fixed
 - `claude_code` role: the worktree-remove hook no longer force-deletes a

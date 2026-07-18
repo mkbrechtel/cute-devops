@@ -6,45 +6,25 @@
 # Claude Code SessionStart hook — one system-wide copy, deployed to
 # /etc/claude/hooks by the osahris.cute_devops.claude_code role.
 #
-# Marks the work directory the session runs in as trusted in the calling
-# user's ~/.claude.json, so the interactive fleet view (`claude agents`) is
-# willing to run the worktree hooks there. Claude Code has no supported way
-# to pre-trust directories centrally (see upstream anthropics/claude-code
-# #23109); until it does, this hook re-seeds the undocumented per-project
-# trust flag whenever a session starts in a work directory. Headless and
-# background sessions run their hooks regardless of trust, so seeding works
-# even before any directory has been trusted interactively.
-#
-# Trusts only what the session touches: the pad (<base>/<project>) the
-# session's cwd falls under, plus the cwd itself when it is a worktree below
-# that pad. Arguments: work base directories (default: /work).
+# Marks the work base directories (default: /work) as trusted in the calling
+# user's ~/.claude.json. Trust is inherited from ancestors, so one trusted
+# base covers every pad and worktree below it — the fleet view
+# (`claude agents`) then runs the worktree hooks no matter which work
+# directory it was launched from. Claude Code has no supported way to
+# pre-trust directories centrally (upstream anthropics/claude-code#23109);
+# until it does, this re-seeds the per-project trust flag on every session
+# start. Headless and background sessions run their hooks regardless of
+# trust, so seeding works before any directory has been trusted
+# interactively, and re-seeding heals the flag if an exiting Claude Code
+# process rewrites ~/.claude.json from a stale snapshot (upstream
+# anthropics/claude-code#36403).
 #
 # SessionStart stdout is injected into the session's context — stay silent.
 set -u
+cat >/dev/null || true
 
-payload="$(cat || true)"
-cwd="$(printf '%s' "$payload" \
-  | sed -n 's/.*"cwd"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
-  | head -n1)"
-[ -z "$cwd" ] && cwd="$PWD"
-
-exec python3 - "$cwd" "${@:-/work}" <<'EOF' >/dev/null 2>&1
+exec python3 - "${@:-/work}" <<'EOF' >/dev/null 2>&1
 import json, os, sys
-
-cwd = os.path.realpath(sys.argv[1])
-pad = None
-for base in sys.argv[2:]:
-    base = os.path.realpath(base)
-    if os.path.commonpath([cwd, base]) == base and cwd != base:
-        rel = os.path.relpath(cwd, base)
-        pad = os.path.join(base, rel.split(os.sep)[0])
-        break
-if pad is None:
-    sys.exit(0)  # session is not in a work directory — nothing to trust
-
-dirs = [pad]
-if cwd != pad:
-    dirs.append(cwd)
 
 path = os.path.expanduser("~/.claude.json")
 try:
@@ -53,10 +33,18 @@ try:
 except (OSError, ValueError):
     sys.exit(0)  # no config yet, or unreadable — never break session start
 
+# Obsolete state from an earlier per-directory design.
+try:
+    os.remove(os.path.expanduser("~/.claude/trust-work-dirs.seeded"))
+except OSError:
+    pass
+
 projects = data.setdefault("projects", {})
 changed = False
-for d in dirs:
-    entry = projects.setdefault(d, {})
+for base in sys.argv[1:]:
+    if not os.path.isdir(base):
+        continue
+    entry = projects.setdefault(os.path.realpath(base), {})
     if not entry.get("hasTrustDialogAccepted"):
         entry["hasTrustDialogAccepted"] = True
         changed = True
