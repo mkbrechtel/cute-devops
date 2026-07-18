@@ -92,7 +92,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`claude_code_with_trust_work_dirs`) that marks the work directory a session
   runs in as trusted in the user's `~/.claude.json` — the fleet view refuses
   to run worktree hooks from untrusted directories (misreported as
-  "WorktreeRemove hook failed"), which made deleting background sessions fail
+  "WorktreeRemove hook failed"), which made deleting background sessions fail.
+  Seeded directories are recorded in `~/.claude/trust-work-dirs.seeded` and
+  re-asserted on every session start, because exiting Claude Code processes
+  rewrite `~/.claude.json` from a stale snapshot and can wipe fresh trust
+  flags (upstream anthropics/claude-code#36403)
 
 ### Fixed
 - `claude_code` role: the worktree-remove hook no longer force-deletes a
