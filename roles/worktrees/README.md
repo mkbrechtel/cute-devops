@@ -22,13 +22,14 @@ layout. For each project it creates `{{ worktrees_base }}/<project>` (default
   Worktrees live inside these; new category folders are created on demand.
 - **`CLAUDE.md`** — the landing doc explaining how to look things up and how to
   spawn a worktree.
-- **`.claude/`** — Claude Code `WorktreeCreate` / `WorktreeRemove` hooks, a
-  `Stop` hook (`require-clean`) that blocks a session from ending while its
-  worktree is dirty (forcing a commit), and `bgIsolation: "worktree"`. Hooks are
-  addressed by `$CLAUDE_PROJECT_DIR`. Note: for the `Stop` and stacked-spawn
-  hooks to fire *inside* a worktree, the same `.claude/settings.json` must be
-  tracked in the repo (checked out per worktree) — Claude Code does not inherit
-  settings from the parent pad directory. This role scaffolds the pad's copy.
+
+The Claude Code hooks (`WorktreeCreate` / `WorktreeRemove` / `Stop`) are **not**
+part of this role anymore: they are deployed machine-wide to `/etc/claude/hooks`
+and wired up via managed settings by the
+[claude_code role](../claude_code/README.md) — one copy for every repo on the
+host, firing in the pad and inside every worktree alike. This role removes any
+`.claude/` hook scaffolding it left in the work directory in earlier versions,
+so the hooks don't fire twice.
 
 Worktrees then live at `/work/<project>/<category>/<branch>` on branches of the
 same name, `<category>/<branch>`, one per unit of work — the branch name always
@@ -74,7 +75,6 @@ worktrees:
     group: devops             # who can create worktrees (defaults to worktrees_default_group)
     owner: root               # who owns policy files (defaults to worktrees_default_owner)
     description: "A cute project."   # optional; used in the scaffolded CLAUDE.md
-    with_claude_hooks: true   # per-project override of worktrees_with_claude_hooks
     categories:               # optional; category folders to pre-create (overrides default)
       - feature
       - fix
@@ -85,7 +85,6 @@ Defaults (see `defaults/main.yml`):
 - `worktrees_default_group: devops`
 - `worktrees_default_owner: root`
 - `worktrees_base: /work`
-- `worktrees_with_claude_hooks: true`
 - `worktrees_default_categories:` — `feature`, `fix`, `hotfix`, `refactor`, `test`, `ci`, `chore`, `docs`, `update`, `experiment`, `release`.
 
 ## Example
@@ -119,6 +118,8 @@ cd /work/foo/feature/add-dns  # now edit and commit
 ## What this role does NOT do
 
 - Create the bare repo. Use `osahris.cute_devops.repos` (or any bare repo).
+- Deploy the Claude Code hooks. Use `osahris.cute_devops.claude_code` — they
+  are machine-wide, not per-project.
 - Wire up the `reference-transaction` hook on `main` (policy + sync-on-merge). That's project-specific — see the pattern.
 - Enforce the `<category>/<branch>` shape on direct `git worktree add` or on push — that belongs in the bare repo's `pre-receive` hook. The `WorktreeCreate` hook enforces it for the Claude path.
 

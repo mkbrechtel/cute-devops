@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+# SPDX-License-Identifier: EUPL-1.2
+#
+# Claude Code WorktreeCreate hook — one system-wide copy, deployed to
+# /etc/claude/hooks by the osahris.cute_devops.claude_code role and wired up in
+# Claude Code's managed settings, so every repo on the host gets it without
+# per-repo scaffolding or sync.
+#
+# Two layouts, chosen by where the session runs:
+#
+#  - shared work directory — the repo's `cute.workdir` git config is set (done
+#    by the worktrees role): the worktree lives at <workdir>/<category>/<branch>
+#    on a branch of the same name, `<category>/<branch>`.
+#  - anywhere else (e.g. a personal clone under $HOME): the worktree lives
+#    inside the checkout at <clone>/work/<name> on branch <name>, where <name>
+#    is a plain `<branch>` slug or `<category>/<branch>`.
+set -euo pipefail
+
+payload="$(cat || true)"
+
+# Pull a name out of the JSON payload (try a few key variants).
+extract() {
+  printf '%s' "$payload" \
+    | sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\"\\([^\"]*\\)\".*/\\1/p" \
+    | head -n1
+}
+name="$(extract name)"
+[ -z "$name" ] && name="$(extract worktree_name)"
+[ -z "$name" ] && name="$(extract worktree_branch)"
+
+# The repo's shared object/ref store. `cute.workdir` in its config marks the
+# shared-work-directory layout and resolves identically from the lookup pad or
+# from inside any worktree.
+common="$(cd "$(git rev-parse --git-common-dir)" && pwd)" || {
+  echo "worktree-create: not inside a git repository" >&2
+  exit 1
+}
+workdir="$(git --git-dir="$common" config --default '' cute.workdir)"
+
+# This input is untrusted, so we validate strictly rather than sanitise — a bad
+# name is rejected outright.
+usage() {
+  echo "worktree-create: '$name' is not a valid worktree name" >&2
+  if [ -n "$workdir" ]; then
+    echo "  expected <category>/<branch>, e.g. feature/add-dns-role" >&2
+  else
+    echo "  expected <branch> or <category>/<branch>, e.g. add-dns-role" >&2
+  fi
+  echo "  category: a lowercase folder name (a-z/0-9/-, start with a letter)" >&2
+  echo "  branch: lowercase a-z/0-9, start with a letter, >=1 dash, <=40 chars" >&2
+}
+
+# Category (optional outside a work directory): a lowercase folder-name slug.
+# No allowlist — any category is fine. Branch: strict slug, at least one dash,
+# at most 40 characters.
+category=""
+branch_slug="$name"
+case "$name" in
+  */*/*) usage; exit 1 ;;
+  */*) category="${name%%/*}"; branch_slug="${name#*/}" ;;
+  *) if [ -n "$workdir" ]; then usage; exit 1; fi ;;
+esac
+if [ -n "$category" ] && ! printf '%s' "$category" | grep -Eq '^[a-z][a-z0-9-]*$'; then
+  usage; exit 1
+fi
+if ! printf '%s' "$branch_slug" | grep -Eq '^[a-z][a-z0-9]*(-[a-z0-9]+)+$' \
+   || ! printf '%s' "$branch_slug" | grep -Eq '^.{1,40}$'; then
+  usage; exit 1
+fi
+
+# Always branch from main, wherever the worktree is created from — so unrelated
+# work never leaks into a new branch. To build on work in review, base your
+# branch on it by hand or merge it in afterwards. Repos whose mainline isn't
+# `main` fall back to the repo's HEAD branch.
+if git --git-dir="$common" show-ref --verify --quiet refs/heads/main; then
+  base="main"
+else
+  base="$(git --git-dir="$common" symbolic-ref --short HEAD)"
+fi
+
+# The branch is named exactly like the worktree's path under its base
+# directory, so the hook behaves the same as a plain `git worktree add` done by
+# hand there.
+branch="$name"
+if [ -n "$workdir" ]; then
+  target="$workdir/$name"
+else
+  # Personal-clone layout: worktrees collect under <clone>/work/. The clone is
+  # the primary worktree — the first entry in `git worktree list`.
+  root="$(git --git-dir="$common" worktree list --porcelain | sed -n 's/^worktree //p' | head -n1)"
+  if [ -z "$root" ] || [ ! -d "$root" ]; then
+    echo "worktree-create: cannot resolve the primary checkout of $common" >&2
+    exit 1
+  fi
+  target="$root/work/$name"
+fi
+
+if [ -e "$target/.git" ]; then
+  printf '%s\n' "$target"
+  exit 0
+fi
+
+# Clear any stale admin entry from a previously removed worktree so re-creating
+# the same name doesn't fail with "missing but already registered".
+git --git-dir="$common" worktree prune >/dev/null 2>&1 || true
+
+# Ensure the parent folder exists. In a shared work directory new category
+# folders get the same 3775 (setgid + sticky + group write) permissions as the
+# work directory; only chmod folders we create, so we don't fight a
+# maintainer-set mode on a pre-existing one.
+parent="$(dirname "$target")"
+if [ ! -d "$parent" ]; then
+  mkdir -p "$parent"
+  if [ -n "$workdir" ]; then
+    chmod 3775 "$parent" 2>/dev/null || true
+  fi
+fi
+
+if git --git-dir="$common" show-ref --verify --quiet "refs/heads/$branch"; then
+  git --git-dir="$common" worktree add "$target" "$branch" >&2
+else
+  git --git-dir="$common" worktree add -b "$branch" "$target" "$base" >&2
+fi
+
+printf '%s\n' "$target"

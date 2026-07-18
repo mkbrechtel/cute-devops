@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+# SPDX-License-Identifier: EUPL-1.2
+#
+# Claude Code `Stop` hook — one system-wide copy, deployed to /etc/claude/hooks
+# by the osahris.cute_devops.claude_code role. Refuses to let a session end
+# while its *worktree* has uncommitted changes, so work always lands as a commit
+# (where git hooks — lint, tests — can gate it).
+#
+# Because this hook fires in every session on the host, it only enforces inside
+# a linked worktree (one spawned off a repo). A primary checkout — someone's own
+# clone with their own WIP — and the bare lookup pad are left alone.
+set -euo pipefail
+
+payload="$(cat || true)"
+
+extract() {
+  printf '%s' "$payload" \
+    | sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\"\\([^\"]*\\)\".*/\\1/p" \
+    | head -n1
+}
+dir="$(extract cwd)"
+[ -z "$dir" ] && dir="$PWD"
+
+# Not inside a real (non-bare) work tree — e.g. the lookup pad. Nothing to
+# commit here, so allow the session to end.
+if [ "$(git -C "$dir" rev-parse --is-inside-work-tree 2>/dev/null || echo false)" != "true" ]; then
+  exit 0
+fi
+
+# A primary checkout has its git dir at the repo root; a linked worktree's git
+# dir lives under the common dir's worktrees/. Only the latter is ours to gate.
+gitdir="$(git -C "$dir" rev-parse --absolute-git-dir 2>/dev/null || true)"
+common="$(git -C "$dir" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)"
+if [ -z "$gitdir" ] || [ "$gitdir" = "$common" ]; then
+  exit 0
+fi
+
+dirty="$(git -C "$dir" status --porcelain 2>/dev/null || true)"
+if [ -z "$dirty" ]; then
+  exit 0
+fi
+
+n="$(printf '%s\n' "$dirty" | grep -c . || true)"
+printf '{"decision":"block","reason":"This worktree has %s uncommitted change(s). Commit your work before finishing: review `git status`, then `git add` and `git commit` on the worktree branch. This Stop hook enforces a clean tree so every change lands as a commit."}\n' "$n"
+exit 0

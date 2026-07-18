@@ -1,0 +1,55 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+- name: "Create hooks directory {{ claude_code_hooks_dir }}"
+  ansible.builtin.file:
+    path: "{{ claude_code_hooks_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: "Install worktree hooks into {{ claude_code_hooks_dir }}"
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "{{ claude_code_hooks_dir }}/{{ item }}"
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - worktree-create
+    - worktree-remove
+
+- name: "Install Stop (require-clean) hook into {{ claude_code_hooks_dir }}"
+  ansible.builtin.copy:
+    src: require-clean
+    dest: "{{ claude_code_hooks_dir }}/require-clean"
+    owner: root
+    group: root
+    mode: "0755"
+  when: claude_code_with_require_clean | bool
+
+- name: "Remove Stop (require-clean) hook when disabled"
+  ansible.builtin.file:
+    path: "{{ claude_code_hooks_dir }}/require-clean"
+    state: absent
+  when: not claude_code_with_require_clean | bool
+
+- name: "Create managed settings drop-in directory"
+  ansible.builtin.file:
+    path: "{{ claude_code_managed_settings_dropin | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: "Wire hooks up in {{ claude_code_managed_settings_dropin }}"
+  ansible.builtin.template:
+    src: managed-settings.json.j2
+    dest: "{{ claude_code_managed_settings_dropin }}"
+    owner: root
+    group: root
+    mode: "0644"

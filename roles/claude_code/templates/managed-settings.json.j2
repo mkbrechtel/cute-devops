@@ -1,0 +1,19 @@
+{% set settings = {
+  "worktree": {"bgIsolation": "worktree"},
+  "hooks": {
+    "WorktreeCreate": [
+      {"hooks": [{"type": "command", "command": claude_code_hooks_dir ~ "/worktree-create"}]}
+    ],
+    "WorktreeRemove": [
+      {"hooks": [{"type": "command", "command": claude_code_hooks_dir ~ "/worktree-remove"}]}
+    ]
+  }
+} %}
+{% if claude_code_with_require_clean %}
+{% set _ = settings.hooks.update({
+  "Stop": [
+    {"hooks": [{"type": "command", "command": claude_code_hooks_dir ~ "/require-clean"}]}
+  ]
+}) %}
+{% endif %}
+{{ settings | to_nice_json }}
