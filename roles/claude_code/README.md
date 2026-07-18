@@ -28,6 +28,15 @@ the same behaviour — no per-repo `.claude/` scaffolding, no sync-on-merge.
   its worktree has uncommitted changes, so work always lands as a commit. It
   only enforces inside *linked* worktrees; a primary checkout (someone's own
   clone with their own WIP) and bare lookup pads are left alone.
+- **`trust-work-dirs`** (opt-in) — a `SessionStart` hook that marks the work
+  directory a session runs in (`<base>/<project>`, plus the session's own
+  worktree) as trusted in the user's `~/.claude.json`. The fleet view
+  (`claude agents`) silently refuses to run worktree hooks from an untrusted
+  directory and misreports it as a hook failure — deleting sessions then fails.
+  Claude Code has no supported way to pre-trust directories centrally
+  ([anthropics/claude-code#23109](https://github.com/anthropics/claude-code/issues/23109));
+  this re-seeds the per-project trust flag instead. Opt-in because it writes
+  to user configuration.
 
 Because hooks from all settings scopes run **in addition to** each other, don't
 also keep per-repo copies of these hooks in `.claude/settings.json` — they
@@ -46,6 +55,9 @@ Defaults (see `defaults/main.yml`):
 - `claude_code_hooks_dir: /etc/claude/hooks`
 - `claude_code_managed_settings_dropin: /etc/claude-code/managed-settings.d/50-cute-devops.json`
 - `claude_code_with_require_clean: true`
+- `claude_code_with_trust_work_dirs: false` — deploy the `SessionStart` trust
+  seeding hook
+- `claude_code_trust_work_bases: [/work]` — work bases the trust hook considers
 
 ## Example
 

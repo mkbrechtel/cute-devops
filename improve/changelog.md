@@ -87,6 +87,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `checker_system_checks` with feature flags
 - All role variable prefixes updated to match new role names
 
+### Added
+- `claude_code` role: opt-in `trust-work-dirs` SessionStart hook
+  (`claude_code_with_trust_work_dirs`) that marks the work directory a session
+  runs in as trusted in the user's `~/.claude.json` — the fleet view refuses
+  to run worktree hooks from untrusted directories (misreported as
+  "WorktreeRemove hook failed"), which made deleting background sessions fail
+
 ### Fixed
 - `claude_code` role: the worktree-remove hook no longer force-deletes a
   worktree with uncommitted changes — it fails and keeps the worktree instead

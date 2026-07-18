@@ -16,4 +16,11 @@
   ]
 }) %}
 {% endif %}
+{% if claude_code_with_trust_work_dirs %}
+{% set _ = settings.hooks.update({
+  "SessionStart": [
+    {"hooks": [{"type": "command", "command": claude_code_hooks_dir ~ "/trust-work-dirs " ~ (claude_code_trust_work_bases | join(" "))}]}
+  ]
+}) %}
+{% endif %}
 {{ settings | to_nice_json }}
