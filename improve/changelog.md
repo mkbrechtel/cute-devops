@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Pure Git Project Workflows pattern family in `patterns/workflows/`: the
+  umbrella pattern (Pure Git Project Workflows 🌻) plus MR Commits 💌,
+  Optimistic Integration 🧺, Merge Reviews 🔍, Continuous Review 🫧, and
+  Release Flow 🎁 — running the whole project lifecycle on git
+  primitives, no forge
 - `repos` role: new `remotes` option to configure multiple git remotes on a
   bare repo, and an `auto_push` option that installs a `reference-transaction`
   hook mirroring branch/tag updates (including deletions) to all remotes not
@@ -28,11 +33,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   this collection's codebase
 
 ### Changed
+- Renamed the `patterns/approaches/` category to `patterns/workflows/`
+  (website nav section Approaches → Workflows, old URLs redirect)
 - Dropped the "treehouses" terminology: the `repos` role now only sets up
   bare repos, and the shared work directory (categories, Claude worktree
   hooks) moved to the new `worktrees` role (`worktrees`, `worktrees_base`,
   `worktrees_default_categories`, `worktrees_with_claude_hooks`); the
-  pattern is now Shared Worktrees (`patterns/approaches/shared-worktrees.md`)
+  pattern is now Shared Worktrees (`patterns/workflows/shared-worktrees.md`)
 - Relicensed from AGPL-3.0-or-later to EUPL-1.2; the
   `restic_client` and `restic_server` roles stay under
   AGPL-3.0-or-later pending consent from a co-author

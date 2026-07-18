@@ -13,7 +13,7 @@ SPDX-License-Identifier: EUPL-1.2
 
 > **Absorbed.** This draft proposed the `<category>/<name>` branch shape as an
 > optional companion. It is now a **mandatory rule** inside
-> [Shared Worktrees 🌳](../patterns/approaches/shared-worktrees.md): every
+> [Shared Worktrees 🌳](../patterns/workflows/shared-worktrees.md): every
 > worktree name is `<category>/<branch>`, where `<category>` is simply a
 > sub-folder under the work directory. The notes below survive as rationale and
 > open enforcement ideas.

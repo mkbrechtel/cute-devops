@@ -11,7 +11,7 @@ SPDX-License-Identifier: EUPL-1.2
 
 # Village of Villages 🏘️
 
-> **Pattern (draft).** Multi-repo extension of [Shared Worktrees 🌳](../patterns/approaches/shared-worktrees.md). Lifted out of that pattern because it's a separate concern most single-repo projects don't need.
+> **Pattern (draft).** Multi-repo extension of [Shared Worktrees 🌳](../patterns/workflows/shared-worktrees.md). Lifted out of that pattern because it's a separate concern most single-repo projects don't need.
 
 ## Goal
 
@@ -59,4 +59,4 @@ worktrees. The org directory adds nothing to the per-repo workflow.
 
 ## Acceptance
 
-Promote to `patterns/approaches/village-of-villages.md` once an actual multi-repo project in this collection runs on this shape and the inheritance-by-reference story for `.claude/` is concrete.
+Promote to `patterns/workflows/village-of-villages.md` once an actual multi-repo project in this collection runs on this shape and the inheritance-by-reference story for `.claude/` is concrete.

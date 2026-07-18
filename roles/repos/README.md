@@ -101,7 +101,7 @@ Notes:
 
 ## Implements
 
-- [Shared Worktrees 🌳](../../patterns/approaches/shared-worktrees.md) — the bare repo half.
+- [Shared Worktrees 🌳](../../patterns/workflows/shared-worktrees.md) — the bare repo half.
 
 ## License
 

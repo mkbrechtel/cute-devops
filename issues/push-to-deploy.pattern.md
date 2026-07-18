@@ -11,7 +11,7 @@ SPDX-License-Identifier: EUPL-1.2
 
 # Push to Deploy 🚀
 
-> **Pattern (draft).** Companion to [Shared Worktrees 🌳](../patterns/approaches/shared-worktrees.md). Adds a deploy step to the worktree lifecycle: after a merge to `main`, `git push <remote>` reaches a deployment target. Same primitive as everything else.
+> **Pattern (draft).** Companion to [Shared Worktrees 🌳](../patterns/workflows/shared-worktrees.md). Adds a deploy step to the worktree lifecycle: after a merge to `main`, `git push <remote>` reaches a deployment target. Same primitive as everything else.
 
 ## Goal
 

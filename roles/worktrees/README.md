@@ -8,7 +8,7 @@ SPDX-License-Identifier: EUPL-1.2
 # Worktrees Role
 
 Adds a shared **work directory** on top of an existing bare git repository,
-implementing the [Shared Worktrees 🌳](https://cute-devops.patterns.how/patterns/approaches/shared-worktrees)
+implementing the [Shared Worktrees 🌳](https://cute-devops.patterns.how/patterns/workflows/shared-worktrees)
 layout. For each project it creates `{{ worktrees_base }}/<project>` (default
 `/work/<project>`) with:
 
@@ -124,7 +124,7 @@ cd /work/foo/feature/add-dns  # now edit and commit
 
 ## Implements
 
-- [Shared Worktrees 🌳](../../patterns/approaches/shared-worktrees.md) — the work-directory half.
+- [Shared Worktrees 🌳](../../patterns/workflows/shared-worktrees.md) — the work-directory half.
 
 ## License
 
