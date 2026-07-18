@@ -29,14 +29,17 @@ the same behaviour — no per-repo `.claude/` scaffolding, no sync-on-merge.
   only enforces inside *linked* worktrees; a primary checkout (someone's own
   clone with their own WIP) and bare lookup pads are left alone.
 - **`trust-work-dirs`** (opt-in) — a `SessionStart` hook that marks the work
-  directory a session runs in (`<base>/<project>`, plus the session's own
-  worktree) as trusted in the user's `~/.claude.json`. The fleet view
-  (`claude agents`) silently refuses to run worktree hooks from an untrusted
-  directory and misreports it as a hook failure — deleting sessions then fails.
-  Claude Code has no supported way to pre-trust directories centrally
+  base directories (default `/work`) as trusted in the user's
+  `~/.claude.json`. Trust is inherited from ancestors, so one trusted base
+  covers every pad and worktree below it. The fleet view (`claude agents`)
+  silently refuses to run worktree hooks from an untrusted directory and
+  misreports it as a hook failure — deleting sessions then fails. Claude Code
+  has no supported way to pre-trust directories centrally
   ([anthropics/claude-code#23109](https://github.com/anthropics/claude-code/issues/23109));
-  this re-seeds the per-project trust flag instead. Opt-in because it writes
-  to user configuration.
+  re-seeding on every session start stands in for that, and heals the flag
+  when an exiting Claude Code process rewrites `~/.claude.json` from a stale
+  snapshot ([#36403](https://github.com/anthropics/claude-code/issues/36403)).
+  Opt-in because it writes to user configuration.
 
 Because hooks from all settings scopes run **in addition to** each other, don't
 also keep per-repo copies of these hooks in `.claude/settings.json` — they

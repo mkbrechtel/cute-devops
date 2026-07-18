@@ -20,9 +20,6 @@
 {% set _ = settings.hooks.update({
   "SessionStart": [
     {"hooks": [{"type": "command", "command": claude_code_hooks_dir ~ "/trust-work-dirs " ~ (claude_code_trust_work_bases | join(" "))}]}
-  ],
-  "SessionEnd": [
-    {"hooks": [{"type": "command", "command": claude_code_hooks_dir ~ "/trust-work-dirs " ~ (claude_code_trust_work_bases | join(" "))}]}
   ]
 }) %}
 {% endif %}
