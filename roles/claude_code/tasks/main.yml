@@ -38,6 +38,21 @@
     state: absent
   when: not claude_code_with_require_clean | bool
 
+- name: "Install SessionStart (trust-work-dirs) hook into {{ claude_code_hooks_dir }}"
+  ansible.builtin.copy:
+    src: trust-work-dirs
+    dest: "{{ claude_code_hooks_dir }}/trust-work-dirs"
+    owner: root
+    group: root
+    mode: "0755"
+  when: claude_code_with_trust_work_dirs | bool
+
+- name: "Remove SessionStart (trust-work-dirs) hook when disabled"
+  ansible.builtin.file:
+    path: "{{ claude_code_hooks_dir }}/trust-work-dirs"
+    state: absent
+  when: not claude_code_with_trust_work_dirs | bool
+
 - name: "Create managed settings drop-in directory"
   ansible.builtin.file:
     path: "{{ claude_code_managed_settings_dropin | dirname }}"
