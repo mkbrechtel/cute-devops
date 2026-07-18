@@ -115,6 +115,25 @@ conventions and present them as a CLI and web UI (MR lists, review rendering).
 Because the conventions carry all the state, tooling can be added, swapped, or
 dropped without migrating anything.
 
+### Agents: prompts teach, hooks guard
+
+An AI agent needs no plugin, no API client, no forge integration to work these
+workflows: **the conventions are the API**, operated with the one tool every
+agent already has — `git`. Two layers carry an agent (or a new human) into
+them:
+
+- **Prompts teach.** The work directory's `CLAUDE.md` (and the README, for
+  humans) states the conventions in prose — worktree names, the `MR:` grammar,
+  who merges. With the right prompt an agent executes the full lifecycle
+  unaided: cut a worktree, commit, mark ready, build an integration basket,
+  cut the review at the merge. Same rules, two renderings.
+- **Hooks guard.** The bare repo's hooks enforce what prose can only request:
+  a malformed branch name, a direct push to `main`, a failing check is
+  rejected at the ref — whoever sent it, however it was prompted.
+
+Prompts make the happy path cheap; hooks make the wrong path impossible. A
+project can start with either layer and grow the other.
+
 ## Security Considerations 🔐
 
 - The access model is the git server's access model: Unix groups and

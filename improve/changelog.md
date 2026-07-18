@@ -22,7 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   umbrella pattern (Pure Git Project Workflows 🌻) plus MR Commits 💌,
   Optimistic Integration 🧺, Merge Reviews 🔍, Continuous Review 🫧, and
   Release Flow 🎁 — running the whole project lifecycle on git
-  primitives, no forge
+  primitives, no forge; plus the `pure-git-workflows` agent skill
+  (`agents/skills/`) — the operational summary agents load to execute
+  these workflows
 - `repos` role: new `remotes` option to configure multiple git remotes on a
   bare repo, and an `auto_push` option that installs a `reference-transaction`
   hook mirroring branch/tag updates (including deletions) to all remotes not
