@@ -15,7 +15,7 @@ published as the Ansible collection `osahris.cute_devops` and rendered to
 The project has three primary surfaces:
 
 - `patterns/` — markdown patterns, organized by category
-  (`approaches/`, `operation/`, `development/`, `about/`, `meta/`).
+  (`workflows/`, `operation/`, `development/`, `about/`, `meta/`).
   See `@patterns/meta/pattern.md` for the structure each pattern follows.
   Aim for simple patterns that help people achieve things effectively
   (`@patterns/meta/cuteness.md`).

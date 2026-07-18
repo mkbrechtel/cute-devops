@@ -32,7 +32,6 @@ repos:
     group: devops                   # group that shares the repo (defaults to repos_default_group)
     owner: root                     # who owns policy files (defaults to repos_default_owner)
     description: "A cute project."  # optional; written to the bare repo's `description`
-    auto_push: false                # per-repo override of repos_with_auto_push
     remotes:                        # optional; git remotes to configure on the bare repo
       - name: github
         url: git@github.com:foo/foo.git
@@ -45,7 +44,6 @@ Defaults (see `defaults/main.yml`):
 
 - `repos_default_group: devops`
 - `repos_default_owner: root`
-- `repos_with_auto_push: false`
 
 ### Remotes
 
@@ -55,12 +53,14 @@ alone.
 
 ### Auto-push
 
-With `auto_push: true` the role installs a `reference-transaction` git hook
-in the bare repo: whenever a branch or tag changes — a push into the repo, a
+Auto-push is configured **per remote**: each declared remote gets a
+`remote.<name>.autopush` git config (true unless the entry sets
+`auto_push: false`). The hook that acts on it is machine-wide — the
+[`git_hooks`](../git_hooks/README.md) role's
+`reference-transaction.d/50-autopush` — so this role only writes config,
+no hook files. Whenever a branch or tag changes — a push into the repo, a
 commit in a shared worktree, a merge — the update is pushed on to every
-configured remote in the background (deletions propagate too). Per remote,
-`auto_push: false` opts that remote out (the hook only pushes to remotes
-whose `remote.<name>.autopush` git config is true).
+autopush-enabled remote in the background (deletions propagate too).
 
 Notes:
 
@@ -68,9 +68,8 @@ Notes:
   group needs credentials for the remotes (e.g. ssh keys / agent).
 - Pushes are non-forced; rejections and other failures are appended to
   `autopush.log` in the bare repo.
-- The hook file is Ansible-managed while `auto_push` is true (it overwrites a
-  hand-rolled `reference-transaction` hook). With `auto_push` false the role
-  never touches the hook.
+- The role removes `reference-transaction` hook files it templated into
+  bare repos in earlier versions; the global hook replaces them.
 
 ## Example
 
@@ -101,7 +100,7 @@ Notes:
 
 ## Implements
 
-- [Shared Worktrees 🌳](../../patterns/approaches/shared-worktrees.md) — the bare repo half.
+- [Shared Worktrees 🌳](../../patterns/workflows/shared-worktrees.md) — the bare repo half.
 
 ## License
 

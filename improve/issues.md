@@ -11,7 +11,7 @@ SPDX-License-Identifier: EUPL-1.2
 -->
 
 This project follows the
-[In-Tree Issues 🗂️](../patterns/approaches/in-tree-issues.md)
+[In-Tree Issues 🗂️](../patterns/workflows/in-tree-issues.md)
 pattern: every issue is a markdown file in the repository, filed
 via a merge request, accepted into `main` by the maintainers.
 There is no separate tracker — `issues/` *is* the tracker.
@@ -74,7 +74,7 @@ Open an MR; reviewers will discuss in-line on the file.
 
 ## What "merged" means here
 
-Per [the pattern](../patterns/approaches/in-tree-issues.md), merging
+Per [the pattern](../patterns/workflows/in-tree-issues.md), merging
 an issue file into `main` is the maintainers' acknowledgement that
 the issue is part of the current development state — not yet a
 commitment to ship a fix today, but a public "yes, this is on our
@@ -114,7 +114,7 @@ else.
 
 ## Related
 
-- [In-Tree Issues 🗂️](../patterns/approaches/in-tree-issues.md) — the
+- [In-Tree Issues 🗂️](../patterns/workflows/in-tree-issues.md) — the
   pattern this page implements.
 - [Pattern Pattern 🔷²](../patterns/meta/pattern.md) — the structure
   used by `pattern.md` issues that graduate into the library.

@@ -55,15 +55,15 @@ people live while they work. They're separate paths:
 /work/foo/                            ← the shared work directory; 3775 (rwxrwsr-t)
 ├── .git                              ← file: "gitdir: /srv/repos/foo.git" (lookup pad)
 ├── CLAUDE.md                         ← how to look things up + spawn a worktree
-├── .claude/
-│   ├── settings.json                 ← wires WorktreeCreate/Remove hooks
-│   └── hooks/
-│       ├── worktree-create           ← creates a worktree for Claude
-│       └── worktree-remove
 ├── feature/                          ← category folder; 3775, same as work dir
 │   └── cute-thing/                   ← worktree, branch feature/cute-thing
 └── fix/                              ← category folder
     └── login-redirect/               ← worktree, branch fix/login-redirect
+
+/etc/claude/hooks/                    ← machine-wide Claude Code hooks (see below)
+├── worktree-create                   ← creates a worktree for Claude
+├── worktree-remove
+└── require-clean                     ← Stop gate: no ending on a dirty worktree
 ```
 
 The bare repo stands on its own — it's a complete git repository and works with
@@ -160,8 +160,8 @@ application-level user database, no per-branch ACL — the kernel decides.
 metadata) and into the work directory (the checkout itself). So group members
 need write access to parts of the bare repo *and* to `/work/foo` (and its
 category folders). But both also hold **policy** — the bare repo's `hooks/` and
-`config`, and the work directory's `.git` file, `.claude/`, and `CLAUDE.md` —
-that must not be edited in place.
+`config`, and the work directory's `.git` file and `CLAUDE.md` — that must not
+be edited in place.
 
 Split write access rather than blanket group-writable:
 
@@ -170,7 +170,8 @@ Split write access rather than blanket group-writable:
 | bare `refs/`, `objects/`, `info/`, `logs/`, `packed-refs`, `worktrees/` | group members (so `git worktree add` works) |
 | bare `hooks/`, `config`, `description` | maintainer only — git's own policy surface |
 | `/work/foo/` and its category folders (to create worktrees) | group members |
-| `/work/foo/.git`, `.claude/`, `CLAUDE.md` | maintainer only — our policy surface |
+| `/work/foo/.git`, `CLAUDE.md` | maintainer only — our policy surface |
+| `/etc/claude/`, managed settings | root only — deployed by configuration management |
 
 Concretely: `git init --bare --shared=group`, `chgrp -R devops foo.git`, strip
 group-write off `foo.git/{hooks,config,description}`; create `/work/foo` and each
@@ -180,10 +181,12 @@ inherit the group and nobody can delete a neighbour's — the same permission st
 as `/tmp`.
 
 Policy files still need to be *changed* — just not in place. The work
-directory's `.claude/` and `CLAUDE.md` are **tracked content on `main`**, and a
+directory's `CLAUDE.md` is **tracked content on `main`**, and a
 `reference-transaction` hook syncs the new tree into the work directory after
-every successful merge. Edit them the same way you edit any other file: in your
-own worktree, via an MR, merged into `main`. The project updates itself.
+every successful merge. Edit it the same way you edit any other file: in your
+own worktree, via an MR, merged into `main`. The project updates itself. The
+Claude Code hooks are deliberately *not* per-project content — they live in
+`/etc/claude`, deployed by configuration management (see below).
 
 The hook scripts resolve the work directory from `cute.workdir` in the bare
 repo's config (recorded once by the role), so they spawn worktrees at the right
@@ -194,51 +197,56 @@ level whether they're invoked from the pad or from inside another worktree.
 **Claude Code already has a worktree isolation feature.** From the CLI, `claude
 --worktree feature/my-thing` spawns a session in a fresh worktree; from inside an
 existing session, asking Claude to call `EnterWorktree` does the same thing. Both
-routes go through `.claude/hooks/worktree-create`, which runs the same `git
-worktree add` under the hood.
+routes go through the `WorktreeCreate` hook, which runs the same `git worktree
+add` under the hood.
 
-`.claude/settings.json` wires Claude's `WorktreeCreate`, `WorktreeRemove`, and
-`Stop` hooks to small shell scripts, addressed by `$CLAUDE_PROJECT_DIR` so the
-same file works in the pad and in every worktree:
+**The hooks are machine policy, not project content.** Claude Code loads
+`.claude/settings.json` only from the session's own project root — it does *not*
+inherit settings from parent directories the way `CLAUDE.md` does, and hooks
+from *every* settings scope run in addition to each other. Per-project copies
+therefore mean one copy per pad plus one tracked in every repo, kept in sync
+forever — and any drift or duplication bites. Deploy the hook scripts **once per
+host** instead: scripts in `/etc/claude/hooks/`, wired up by a [managed
+settings](https://code.claude.com/docs/en/settings) drop-in that applies to every
+session on the machine:
 
 ```json
+// /etc/claude-code/managed-settings.d/50-cute-devops.json
 {
   "worktree": { "bgIsolation": "worktree" },
   "hooks": {
     "WorktreeCreate": [{"hooks": [{"type": "command",
-      "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/worktree-create"}]}],
+      "command": "/etc/claude/hooks/worktree-create"}]}],
     "WorktreeRemove": [{"hooks": [{"type": "command",
-      "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/worktree-remove"}]}],
+      "command": "/etc/claude/hooks/worktree-remove"}]}],
     "Stop": [{"hooks": [{"type": "command",
-      "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/require-clean"}]}]
+      "command": "/etc/claude/hooks/require-clean"}]}]
   }
 }
 ```
 
+Because the hooks now fire in every repo on the host, they choose the layout by
+where they run:
+
+- a repo with a **shared work directory** (`cute.workdir` set in the bare repo's
+  config): worktrees at `<workdir>/<category>/<branch>` on a branch of the same
+  name — this pattern's layout;
+- **any other checkout** (say, a personal clone under `$HOME`): worktrees
+  collect inside the clone at `<clone>/work/<name>` on branch `<name>`.
+
 The create hook does what a human runs by hand, with the untrusted-input jobs a
-typed command doesn't need: it splits the `<category>/<branch>` name, checks the
-category is a valid folder-name slug and the branch a valid slug, ensures the
-category folder exists (creating it with `3775` on demand), picks the base branch
-(current branch if inside a worktree, else `main`), and prints the path. The
-remove hook refuses any path outside the work directory, then calls `git worktree
-remove --force`.
+typed command doesn't need: it validates the name strictly, ensures the parent
+folder exists (category folders created with `3775` on demand), cuts the branch
+from `main`, and prints the path. The remove hook refuses any path outside where
+the create hook creates, then calls `git worktree remove`.
 
 The **`Stop` hook** (`require-clean`) refuses to let a session end while its
 worktree has uncommitted changes — so work always lands as a commit, and git's
-own `pre-commit` / `pre-push` hooks (lint, tests) get a chance to gate it. The
-bare pad has no work tree, so the hook is a no-op there. `bgIsolation: "worktree"`
-tells background sessions to auto-isolate into their own worktree.
-
-**Where the settings must live.** Claude Code loads `.claude/settings.json` only
-from the session's own project root — it does *not* inherit settings from parent
-directories the way `CLAUDE.md` does. So a hook that must fire *inside a worktree*
-(the `Stop` gate, and `WorktreeCreate` for stacking a new worktree from within an
-existing one) has to be in the **repository's tracked `.claude/settings.json`**,
-which is checked out into every worktree. The pad's `.claude/` (scaffolded by the
-role) only governs sessions started *in the pad*. Keep the two in sync: track the
-canonical `.claude/` on `main` and let the `reference-transaction` hook copy it
-into the pad — so a Claude session in a fresh worktree starts already knowing how
-the project works, with no per-session bootstrapping.
+own `pre-commit` / `pre-push` hooks (lint, tests) get a chance to gate it. It
+only enforces inside *linked* worktrees: the bare pad has no work tree, and a
+primary checkout (someone's own clone, their own WIP) is not the hook's
+business. `bgIsolation: "worktree"` tells background sessions to auto-isolate
+into their own worktree.
 
 ## Security Considerations 🔐
 
@@ -248,12 +256,12 @@ the project works, with no per-session bootstrapping.
 - **No network surface added.** The bare repo is reached via local filesystem permissions; there's no extra daemon to harden.
 - **Ownership = authorship.** Every commit in a worktree is made by the Unix user who owns it. `git log` and `stat` agree on who did what.
 - **Isolation is per worktree, not per process.** Anyone running as user `alice` (whether Alice or a Claude session she started) can read every other worktree on the host. That's a feature for collaboration; pair it with a system-level sandbox if you need stronger separation.
-- **`.claude/settings.json` is policy.** It controls what an agent may do. Review changes like CI config, and have the bare repo sync it from `main`, never edit it in place.
+- **The managed settings drop-in is policy.** It controls what an agent may do, machine-wide. It lives in `/etc`, root-owned, deployed by configuration management — review changes like CI config, never edit it in place on the host.
 
 ## Anti-Patterns ⚠️
 
 - ❌ **Editing at the top of the work directory.** The pad is for looking things up; it reports as bare so git stops you. Do work in a worktree.
-- ❌ **Blanket group-write on the whole bare repo or work directory.** Everyone then has write access to `hooks/` and `.claude/`. Split permissions and sync policy files from `main`.
+- ❌ **Blanket group-write on the whole bare repo or work directory.** Everyone then has write access to `hooks/` and the policy files. Split permissions and sync policy files from `main`.
 - ❌ **A helper script that wraps `git worktree add` for humans.** A line of plain git does the job; validation belongs in the `WorktreeCreate` hook (which has untrusted input), not in a third place.
 - ❌ **A clone per user.** Wastes disk, hides in-progress work behind `ssh`, makes "what is everyone doing?" a coordination problem instead of an `ls`.
 - ❌ **One shared worktree with branch switching.** Two contributors will collide on `git checkout` within the first hour. Git designed worktrees specifically to make this unnecessary.
@@ -266,10 +274,10 @@ the project works, with no per-session bootstrapping.
 ## Best Practices 💡
 
 - **Look things up from the pad, work in a worktree.** `git log` / `git branch` at `/work/<project>`; edit only inside `/work/<project>/<category>/<branch>`.
-- **Stack on top of review.** Cut follow-up work from inside the worktree it depends on, not from `main`; the hook does this for you when you call `EnterWorktree` from within a worktree.
+- **Build on review explicitly.** New branches are always cut from `main`; when follow-up work depends on an open MR, merge that branch in from inside the new worktree (`git merge <category>/<branch>`) so the dependency is visible in the log.
 - **Keep the category folders few and honest.** A handful of categories that mean something beats a taxonomy nobody reads.
 - **Pair this with [[in-tree-issues]]** so the same merge ritual governs both code and the issues that describe it.
-- **Sync policy from `main`, never edit it in place.** The work directory's `.claude/` and `CLAUDE.md` are tracked files; a `reference-transaction` hook updates the live copies after each successful merge.
+- **Sync policy from `main`, never edit it in place.** The work directory's `CLAUDE.md` is a tracked file; a `reference-transaction` hook updates the live copy after each successful merge. The Claude Code hooks are machine policy in `/etc/claude`, updated only by configuration management.
 - **Remove worktrees on merge.** If the branch is gone from `main`, the worktree should be too. A short cron that prunes stale, merged-and-empty worktrees keeps `/work/<project>` tidy.
 - **Put CI / lint inside the bare repo's `hooks/`.** A fresh worktree inherits them by being a worktree of the bare repo; there is nothing to install.
 
@@ -292,16 +300,16 @@ the project works, with no per-session bootstrapping.
 
 ### Wire the Claude path
 
-- [ ] Track `.claude/settings.json` on `main` with `WorktreeCreate`, `WorktreeRemove`, and `Stop` hooks addressed by `$CLAUDE_PROJECT_DIR` (so it works checked out in any worktree). Scaffold a copy into `/work/foo/.claude/` for pad sessions.
-- [ ] Add `worktree-create` that reads the JSON from stdin, splits `<category>/<branch>`, validates the category folder slug and the branch slug, ensures the category folder exists (`3775`), resolves the work directory from `cute.workdir`, picks the base branch (current branch inside a worktree, else `main`), runs `git worktree add`, and prints the path.
-- [ ] Add `worktree-remove` that refuses any path outside `/work/foo/` and then calls `git worktree remove --force`.
-- [ ] Add `require-clean` (the `Stop` hook): block the session from ending while `git status` in the worktree is dirty; no-op in the bare pad.
-- [ ] Strip group-write on `/work/foo/.git`, `/work/foo/.claude`, and `CLAUDE.md`.
+- [ ] Install the hook scripts machine-wide in `/etc/claude/hooks/` (root-owned, `0755`) and wire them up in a managed settings drop-in (`/etc/claude-code/managed-settings.d/`), with `"worktree": {"bgIsolation": "worktree"}`. No per-repo `.claude/settings.json` — hooks from every settings scope run *in addition* to each other, so per-repo copies would fire twice.
+- [ ] `worktree-create`: read the JSON from stdin, validate the name strictly, resolve the layout (`cute.workdir` set → `<workdir>/<category>/<branch>`; otherwise `<clone>/work/<name>`), ensure the parent folder exists (`3775` in a work directory), cut the branch from `main`, run `git worktree add`, print the path.
+- [ ] `worktree-remove`: refuse any path outside where `worktree-create` creates, then call `git worktree remove`.
+- [ ] `require-clean` (the `Stop` hook): block the session from ending while `git status` in the worktree is dirty; only enforce in linked worktrees — the bare pad and primary checkouts are left alone.
+- [ ] Strip group-write on `/work/foo/.git` and `CLAUDE.md`.
 
 ### Protect the mainline
 
 - [ ] In `foo.git/hooks/`, set a `reference-transaction` policy on `main` (fast-forward-only, merge-commit-only) — see [[in-tree-issues]] for the shape.
-- [ ] Extend the same hook to sync the work directory's `.claude/` and `CLAUDE.md` from the new tree after every successful merge.
+- [ ] Extend the same hook to sync the work directory's `CLAUDE.md` from the new tree after every successful merge.
 - [ ] Optionally, a `pre-receive`/`update` hook that rejects any branch (apart from `main`) whose shape isn't `<category>/<branch>` — see [[worktree-branch-shape]].
 - [ ] Add `pre-receive` / `update` hooks for CI and lint that every push must satisfy.
 - [ ] Auto-push `main` to your public mirrors from the same hook.
@@ -309,10 +317,12 @@ the project works, with no per-session bootstrapping.
 ## Possible Implementations 🛠️
 
 - [`osahris.cute_devops.repos`](../../roles/repos/README.md) — sets up the plain bare git repo: `git init --bare --shared=group`, group ownership, `description`, and group-write stripped off the policy paths.
-- [`osahris.cute_devops.worktrees`](../../roles/worktrees/README.md) — adds the shared work directory on top of a bare repo: the `/work/<project>` directory at `chmod 3775`, the `.git` lookup pad, the starter category folders, the `CLAUDE.md` landing doc, and the `.claude/` worktree hooks, and records `cute.workdir` in the bare repo's config.
+- [`osahris.cute_devops.worktrees`](../../roles/worktrees/README.md) — adds the shared work directory on top of a bare repo: the `/work/<project>` directory at `chmod 3775`, the `.git` lookup pad, the starter category folders, and the `CLAUDE.md` landing doc, and records `cute.workdir` in the bare repo's config.
+- [`osahris.cute_devops.claude_code`](../../roles/claude_code/README.md) — deploys the Claude Code hooks machine-wide: `worktree-create` / `worktree-remove` / `require-clean` in `/etc/claude/hooks/`, wired up by a managed settings drop-in.
 
 ## Related Patterns 🔗
 
+- [Pure Git Project Workflows 🌻](./pure-git-project-workflows.md) — the umbrella: the whole project lifecycle on git primitives, with this pattern as the "where work happens" piece.
 - [Smalltown Infrastructure 🏘️](./smalltown-infrastructure.md) — the bigger picture these repos sit in: small, legible, operable by the team you actually have.
 - [In-Tree Issues 🗂️](./in-tree-issues.md) — pair the worktree ritual with the same merge ritual for issues; both flow through `main`.
 - [Worktree Branch Shape 🪧](../../issues/worktree-branch-shape.pattern.md) — *(absorbed)* the `<category>/<branch>` discipline, now a core rule of this pattern.

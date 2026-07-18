@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Pure Git Project Workflows pattern family in `patterns/workflows/`: the
+  umbrella pattern (Pure Git Project Workflows 🌻) plus MR Commits 💌,
+  Optimistic Integration 🧺, Merge Reviews 🔍, Continuous Review 🫧, and
+  Release Flow 🎁 — running the whole project lifecycle on git
+  primitives, no forge; plus the `pure-git-workflows` agent skill
+  (`agents/skills/`) — the operational summary agents load to execute
+  these workflows
 - `repos` role: new `remotes` option to configure multiple git remotes on a
   bare repo, and an `auto_push` option that installs a `reference-transaction`
   hook mirroring branch/tag updates (including deletions) to all remotes not
@@ -26,13 +33,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   platform — from its own git repository. gitflower stays an independent
   product promoted as part of the ecosystem; it is not integrated into
   this collection's codebase
+- New `git_hooks` role: machine-wide git hooks directory (`/etc/git/hooks`
+  via system `core.hooksPath`) with an extensible `.d` layout — a generic
+  dispatcher per hook name that runs `<hook>.d/*` and chains to the
+  repository's own `hooks/<hook>`, the static auto-push script in
+  `reference-transaction.d/`, and pluggable tree validation:
+  `check-tree <tree-ish>` runs every check in `check-tree.d/` (starting
+  with a REUSE lint check) and gates pushes via `pre-receive.d/`
+- New `claude_code` role: deploys the Claude Code worktree hooks
+  (`worktree-create`, `worktree-remove`, `require-clean`) machine-wide to
+  `/etc/claude/hooks/`, wired up via a managed-settings drop-in in
+  `/etc/claude-code/managed-settings.d/`. The hooks pick the layout by
+  location: a repo with `cute.workdir` set gets the shared
+  `<workdir>/<category>/<branch>` layout; any other checkout (e.g. a clone
+  in `$HOME`) gets worktrees under `<clone>/work/<name>`
 
 ### Changed
+- `repos` role: auto-push is no longer a templated per-repo hook — the role
+  only writes the per-remote `remote.<name>.autopush` git config (and removes
+  hook files templated by earlier versions); the acting hook is the
+  `git_hooks` role's global `reference-transaction.d/50-autopush`. The
+  repo-level `auto_push` / `repos_with_auto_push` toggles are gone
+- Renamed the `patterns/approaches/` category to `patterns/workflows/`
+  (website nav section Approaches → Workflows, old URLs redirect)
+- `worktrees` role: no longer scaffolds `.claude/` hooks or settings into the
+  work directory (and cleans up scaffolds left by earlier versions) — the hooks
+  are machine-wide via the new `claude_code` role, so per-repo copies would
+  fire twice. `worktrees_with_claude_hooks` is gone, and the repo's own
+  tracked `.claude/` went with it
 - Dropped the "treehouses" terminology: the `repos` role now only sets up
   bare repos, and the shared work directory (categories, Claude worktree
   hooks) moved to the new `worktrees` role (`worktrees`, `worktrees_base`,
   `worktrees_default_categories`, `worktrees_with_claude_hooks`); the
-  pattern is now Shared Worktrees (`patterns/approaches/shared-worktrees.md`)
+  pattern is now Shared Worktrees (`patterns/workflows/shared-worktrees.md`)
 - Relicensed from AGPL-3.0-or-later to EUPL-1.2; the
   `restic_client` and `restic_server` roles stay under
   AGPL-3.0-or-later pending consent from a co-author

@@ -1,0 +1,16 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+# Where the hook scripts land on the host.
+claude_code_hooks_dir: /etc/claude/hooks
+# The managed-settings drop-in that wires the hooks up machine-wide. Claude
+# Code merges /etc/claude-code/managed-settings.d/*.json alphabetically into
+# /etc/claude-code/managed-settings.json; a drop-in composes with other policy
+# instead of owning the whole file.
+claude_code_managed_settings_dropin: /etc/claude-code/managed-settings.d/50-cute-devops.json
+# Deploy the Stop hook that blocks a session from ending while its worktree has
+# uncommitted changes.
+claude_code_with_require_clean: true

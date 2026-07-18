@@ -64,6 +64,11 @@
 		respond "ok" 200
 	}
 
+	# Legacy paths: patterns/approaches/ became patterns/workflows/.
+	handle_path /patterns/approaches/* {
+		redir * /patterns/workflows{path} 301
+	}
+
 	# Dynamic sitemap — no content file; the template enumerates
 	# /content/ at request time.
 	handle /sitemap {

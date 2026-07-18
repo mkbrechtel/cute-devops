@@ -79,7 +79,7 @@ NAT for the rest of its life.
 
 ## Related 🔗
 
-- [Smalltown Infrastructure 🏘️](../patterns/approaches/smalltown-infrastructure.md) —
+- [Smalltown Infrastructure 🏘️](../patterns/workflows/smalltown-infrastructure.md) —
   the pattern this is the anti-pattern of.
 - [Don't introduce GitLab as the central DevOps Hub of your organization! 🔻🦊](./gitlab.md) —
   same shape, with the SaaS replaced by a self-hosted megaproduct.

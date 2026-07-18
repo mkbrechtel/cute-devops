@@ -46,7 +46,7 @@ Categories live directly under `patterns/`:
 ```
 patterns/
 ├── about/
-├── approaches/
+├── workflows/
 ├── development/
 ├── meta/
 ├── operation/

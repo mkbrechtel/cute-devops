@@ -195,6 +195,10 @@ Render them on the website at build time when needed.
 
 ## Related Patterns 🔗
 
+- [Pure Git Project Workflows 🌻](./pure-git-project-workflows.md) —
+  the umbrella; this pattern is its "what to do" piece, and
+  [Merge Reviews 🔍](./merge-reviews.md) feed unresolved findings
+  into the same `issues/` directory.
 - [Pattern Pattern 🔷²](../meta/pattern.md) — for documenting
   patterns once they emerge from issue conversations.
 - [Smalltown Infrastructure 🏘️](./smalltown-infrastructure.md) —

@@ -10,7 +10,6 @@
     _repo_group: "{{ repo.group | default(repos_default_group) }}"
     _repo_owner: "{{ repo.owner | default(repos_default_owner) }}"
     _repo_remotes: "{{ repo.remotes | default([]) }}"
-    _repo_auto_push: "{{ repo.auto_push | default(repos_with_auto_push) }}"
 
 - name: "Assert repo.path is absolute and ends in .git: {{ _repo_path }}"
   ansible.builtin.assert:
@@ -42,14 +41,13 @@
   ansible.builtin.include_tasks: remotes.yml
   when: _repo_remotes | length > 0
 
-- name: "Install auto-push reference-transaction hook in {{ _repo_path }}"
-  ansible.builtin.template:
-    src: reference-transaction.sh.j2
-    dest: "{{ _repo_path }}/hooks/reference-transaction"
-    owner: "{{ _repo_owner }}"
-    group: "{{ _repo_group }}"
-    mode: "0755"
-  when: _repo_auto_push | bool
+# Auto-push is a global hook now (git_hooks role, reference-transaction.d/
+# 50-autopush) driven purely by the per-remote autopush git config set
+# above. Clear out per-repo copies templated by earlier versions.
+- name: "Remove legacy per-repo auto-push hook in {{ _repo_path }}"
+  ansible.builtin.file:
+    path: "{{ _repo_path }}/hooks/reference-transaction"
+    state: absent
 
 - name: "Set group ownership across {{ _repo_path }}"
   ansible.builtin.file:
