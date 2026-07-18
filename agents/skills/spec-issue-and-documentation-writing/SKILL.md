@@ -1,4 +1,9 @@
 ---
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
 name: spec-issue-and-documentation-writing
 description: When writing or editing specs, issue files, or documentation markdown. Brainstorm freely, but never invent content into the file without approval; format, structure, and edit are trusted. Keep negative / "we decided not to" / rationale-only material in a deletable `# Considerations` section at the bottom. Docs themselves stay in positive, declarative voice.
 ---
