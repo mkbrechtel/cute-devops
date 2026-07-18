@@ -1,0 +1,38 @@
+#!/bin/sh
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+# SPDX-License-Identifier: EUPL-1.2
+#
+# This file is managed by the osahris.cute_devops.git_hooks Ansible role!
+#
+# check-tree <tree-ish> — validate a git tree with pluggable checks.
+#
+# Exports the tree to a temporary directory and runs every executable in
+# check-tree.d/ against it: cwd is the exported tree, $1 is the tree-ish
+# under test. A check exits non-zero to fail the validation; check-tree
+# runs all checks and reports every failure before exiting non-zero.
+# Usable standalone (`check-tree main`) and from gating hooks
+# (see pre-receive.d/50-check-tree).
+
+set -u
+tree="${1:?usage: check-tree <tree-ish>}"
+dir="$(cd "$(dirname "$0")" && pwd)"
+
+tmp="$(mktemp -d)" || exit 1
+trap 'rm -rf "$tmp"' EXIT INT TERM
+
+if ! git archive "$tree" | (cd "$tmp" && tar -x); then
+  echo "check-tree: cannot export tree $tree" >&2
+  exit 1
+fi
+
+rc=0
+for check in "$dir/check-tree.d"/*; do
+  [ -x "$check" ] || continue
+  if ! (cd "$tmp" && "$check" "$tree"); then
+    echo "check-tree: $(basename "$check") failed for $tree" >&2
+    rc=1
+  fi
+done
+
+exit "$rc"

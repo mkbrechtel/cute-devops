@@ -1,0 +1,31 @@
+#!/bin/sh
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+# SPDX-License-Identifier: EUPL-1.2
+#
+# This file is managed by the osahris.cute_devops.git_hooks Ansible role!
+# Installed as pre-receive.d/50-check-tree.
+#
+# Gate incoming pushes: run check-tree against the new tip of every
+# updated branch. A failing check rejects the whole push, and the check
+# output reaches the pusher on stderr.
+
+dir="$(cd "$(dirname "$0")/.." && pwd)"
+
+rc=0
+while read -r old new ref; do
+  case "$ref" in
+    refs/heads/*) ;;
+    *) continue ;;
+  esac
+  case "$new" in
+    *[!0]*) ;;
+    *) continue ;;   # all-zero OID: branch deletion, nothing to validate
+  esac
+  if ! "$dir/check-tree" "$new"; then
+    echo "pre-receive: check-tree rejected $ref ($new)" >&2
+    rc=1
+  fi
+done
+
+exit "$rc"

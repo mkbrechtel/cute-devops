@@ -1,0 +1,50 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+# Global git hooks directory, set machine-wide via `git config --system
+# core.hooksPath`.
+git_hooks_dir: /etc/git/hooks
+
+# Install the check-tree driver, the check-tree.d/50-reuse REUSE check,
+# and the pre-receive.d/50-check-tree push gate.
+git_hooks_with_check_tree: true
+
+# Hook names that get the dispatcher. Every common client- and server-side
+# hook is covered so repo-local hooks keep firing — with core.hooksPath
+# set, git looks only in the global directory, and the dispatcher chains
+# to the repository's own hooks/<name>. Hooks whose mere existence changes
+# git's behaviour (proc-receive, push-to-checkout, fsmonitor-watchman) are
+# deliberately not dispatched.
+git_hooks_hooks:
+  - applypatch-msg
+  - pre-applypatch
+  - post-applypatch
+  - pre-commit
+  - pre-merge-commit
+  - prepare-commit-msg
+  - commit-msg
+  - post-commit
+  - pre-rebase
+  - post-checkout
+  - post-merge
+  - pre-push
+  - pre-receive
+  - update
+  - post-receive
+  - post-update
+  - pre-auto-gc
+  - post-rewrite
+  - sendemail-validate
+  - reference-transaction
+
+# Extensible .d directories created up front (any <hook>.d directory
+# works once created — the dispatcher picks it up by name).
+git_hooks_dotd:
+  - pre-receive
+  - post-receive
+  - update
+  - post-update
+  - reference-transaction

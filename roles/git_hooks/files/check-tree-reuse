@@ -1,0 +1,21 @@
+#!/bin/sh
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+# SPDX-License-Identifier: EUPL-1.2
+#
+# This file is managed by the osahris.cute_devops.git_hooks Ansible role!
+# Installed as check-tree.d/50-reuse.
+#
+# Validate REUSE (licensing) compliance of the tree under test. Runs in
+# the exported tree (see check-tree). Skips silently when the reuse tool
+# is not installed, or when the tree doesn't opt in to REUSE (no
+# REUSE.toml and no LICENSES/ directory).
+
+command -v reuse >/dev/null 2>&1 || exit 0
+[ -e REUSE.toml ] || [ -d LICENSES ] || exit 0
+
+if ! out="$(reuse lint 2>&1)"; then
+  printf '%s\n' "$out" >&2
+  exit 1
+fi
+exit 0
