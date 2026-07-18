@@ -20,8 +20,16 @@
         remotes:
           - name: github
             url: git@github.com:mkbrechtel/cute-devops.git
+            auto_push: true
           - name: codeberg
             url: ssh://git@codeberg.org/mkbrechtel/cute-devops.git
+            auto_push: true
+          - name: gitlab
+            url: git@gitlab.com:idcohorts/cute-devops.git
+            auto_push: false
+          - name: osahris
+            url: git@github.com:osahris/cute-devops.git
+            auto_push: false
       - name: pod
         path: /srv/repos/pod.git
         group: devops
