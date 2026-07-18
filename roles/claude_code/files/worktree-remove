@@ -8,15 +8,6 @@
 # worktree-create: removes a worktree it could have created, and nothing else.
 set -euo pipefail
 
-# The caller may run this hook from inside the very worktree being removed; once
-# that directory is gone, git aborts trying to read the missing CWD (exit 128).
-# Resolve the repo while the CWD still exists, then anchor somewhere stable.
-common="$(cd "$(git rev-parse --git-common-dir)" && pwd)" || {
-  echo "worktree-remove: not inside a git repository" >&2
-  exit 1
-}
-cd /
-
 payload="$(cat || true)"
 
 extract() {
@@ -31,6 +22,34 @@ if [ -z "$path" ]; then
   echo "worktree-remove: no path in payload" >&2
   exit 0
 fi
+
+# Resolve the repo from the worktree being removed, not from the process CWD:
+# the hook may be invoked from anywhere (deleting a background session runs it
+# from wherever `claude` happened to be started), and the payload path is what
+# identifies the repository. Fall back to the CWD only for a worktree that has
+# already vanished from disk, so its admin entry can still be pruned.
+common=""
+if [ -d "$path" ]; then
+  gitdir="$(cd "$path" && git rev-parse --git-common-dir 2>/dev/null)" || gitdir=""
+  if [ -n "$gitdir" ]; then
+    common="$(cd "$path" && cd "$gitdir" && pwd)"
+  fi
+fi
+if [ -z "$common" ]; then
+  gitdir="$(git rev-parse --git-common-dir 2>/dev/null)" || gitdir=""
+  if [ -n "$gitdir" ]; then
+    common="$(cd "$gitdir" && pwd)"
+  fi
+fi
+if [ -z "$common" ]; then
+  if [ ! -e "$path" ]; then
+    # Nothing on disk and no repository in reach — nothing left to do.
+    exit 0
+  fi
+  echo "worktree-remove: cannot locate the repository for $path" >&2
+  exit 1
+fi
+cd /
 
 # Where may this hook delete? Only where worktree-create creates: under the
 # shared work directory (`cute.workdir` layout), or under <clone>/work/ of a
