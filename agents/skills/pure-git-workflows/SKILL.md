@@ -46,15 +46,18 @@ inside a worktree, new branches stack on the current branch.
 
 When the branch is ready for merging, add an empty commit — subject
 `MR: <title>`, body carrying the description (reuse-ready as a merge commit
-message; note mechanics like "FF-able onto main"):
+message; note mechanics like "FF-able onto main"). Optionally scope the subject
+Conventional-Commits style, `MR(<topic>): <title>`; the branch name minus the
+`work/` prefix is the natural topic:
 
 ```bash
-git commit --allow-empty -m "MR: <title>
+git commit --allow-empty -m "MR(<category>/<branch>): <title>
 
 <why and what; reference issues/<slug>.md if one exists>"
 ```
 
-List open MRs: `git log --branches --not main --grep '^MR:' --oneline`.
+List open MRs: `git log --branches --not main --grep '^MR[(:]' --oneline`
+(the character class matches both subject forms, scoped and not).
 What follows the mark — review, QA, nothing — is the project's convention, not
 yours to assume. A superseding `MR:` commit updates the request.
 

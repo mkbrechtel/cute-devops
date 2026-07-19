@@ -12,11 +12,12 @@ SPDX-License-Identifier: EUPL-1.2
 ## Overview 📋
 
 A merge request is an **empty commit on the work branch itself**, subject
-`MR: <title>`, body carrying the description. It marks the branch **ready for
-merging** — everything before it is work in flight; the MR commit is the
-boundary. What happens *after* the mark is deliberately open: the project's own
-convention decides whether a review, testing, QA, or nothing at all stands
-between the mark and the merge. The coupling is loose by design.
+`MR: <title>` — optionally scoped as `MR(<topic>): <title>` — body carrying the
+description. It marks the branch **ready for merging** — everything before it
+is work in flight; the MR commit is the boundary. What happens *after* the mark
+is deliberately open: the project's own convention decides whether a review,
+testing, QA, or nothing at all stands between the mark and the merge. The
+coupling is loose by design.
 
 ## Goals 🎯
 
@@ -34,7 +35,7 @@ between the mark and the merge. The coupling is loose by design.
 ### The commit
 
 ```bash
-git commit --allow-empty -m "MR: Shared worktrees layout
+git commit --allow-empty -m "MR(feature/shared-worktrees): Shared worktrees layout
 
 Replace the treehouse scaffold with a dedicated worktrees role that
 manages the shared work directory.
@@ -42,8 +43,17 @@ manages the shared work directory.
 FF-able onto main — this empty commit marks the merge request."
 ```
 
-- **Subject**: `MR: <title>` — the `MR:` prefix is the grammar; the title reads
+- **Subject**: `MR: <title>` — the `MR` prefix is the grammar; the title reads
   like a merge commit subject.
+- **Scope** *(optional)*: `MR(<topic>): <title>`, the
+  [Conventional Commits](https://www.conventionalcommits.org/) shape with `MR`
+  as the type. The topic says what the request is *about*, so the subject stays
+  self-describing when it is read away from its branch — in a merge log, in an
+  integration basket listing, in the open-MR list. The **source branch name is
+  the natural topic** and the one to reach for by default (`feature/new-api`
+  for a branch stored as `work/feature/new-api` — drop whatever prefix the
+  project namespaces its work branches with), but nothing binds the scope to a
+  ref: any short topic that names the change honestly is valid.
 - **Body**: the merge request description — motivation, summary of changes,
   anything a reviewer or maintainer needs.
 - **Empty**: `--allow-empty`, no tree change. The commit is pure metadata, so
@@ -54,12 +64,15 @@ attribution matters.
 
 ### Discovery
 
-Open MRs are branches whose history contains an `MR:` commit not yet reachable
-from `main`:
+Open MRs are branches whose history contains an `MR:` commit not yet
+reachable from `main`:
 
 ```bash
-git log --branches --not main --grep '^MR:' --oneline
+git log --branches --not main --grep '^MR[(:]' --oneline
 ```
+
+The `[(:]` character class matches both subject forms — scoped and unscoped —
+since the scope is optional.
 
 That one-liner is the MR list. gitflower reads the same convention and renders
 it as a CLI and web view; nothing more than the refs is needed.
@@ -139,5 +152,5 @@ mark would trigger.
 
 ## References 📚
 
-- `git log --grep '^MR:'` in this repository — the collection's own merge
-  requests, e.g. *"MR: Shared worktrees layout"*.
+- `git log --grep '^MR[(:]'` in this repository — the collection's own merge
+  requests, e.g. *"MR(feature/shared-worktrees): Shared worktrees layout"*.

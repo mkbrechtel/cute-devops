@@ -101,10 +101,14 @@ Open an MR against `main`; the maintainer reviews and merges. Don't push to
 
 An MR is an **empty commit on the work branch itself**, subject `MR: <title>`,
 body carrying the description. It marks the branch ready for merging —
-everything before it is work in flight, the MR commit is the boundary:
+everything before it is work in flight, the MR commit is the boundary.
+
+The subject may carry a Conventional-Commits scope naming the topic,
+`MR(<topic>): <title>`; this worktree's own `<category>/<branch>` name is the
+natural topic to use:
 
 ```bash
-git commit --allow-empty -m "MR: <title>
+git commit --allow-empty -m "MR(<category>/<branch>): <title>
 
 <description — motivation, summary of changes, anything the maintainer needs.>"
 ```
@@ -112,7 +116,7 @@ git commit --allow-empty -m "MR: <title>
 List open MRs (branches with an `MR:` commit not yet reachable from `main`):
 
 ```bash
-git log --branches --not main --grep '^MR:' --oneline
+git log --branches --not main --grep '^MR[(:]' --oneline
 ```
 
 **Claude: only create the MR commit once the user says the work is ready for

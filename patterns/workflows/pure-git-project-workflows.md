@@ -70,7 +70,8 @@ application; a bare repo with hooks is enough.
 - [In-Tree Issues 🗂️](./in-tree-issues.md) — what to do: issues as markdown
   files in the repo, filed and resolved through the same lifecycle as code.
 - [MR Commits 💌](./mr-commits.md) — the ready signal: an empty commit
-  `MR: <title>` marks a branch ready for merging.
+  `MR: <title>` — optionally scoped `MR(<topic>): <title>` — marks a branch
+  ready for merging.
 - [Optimistic Integration 🧺](./optimistic-integration.md) — combining
   in-flight work: `integration/<topic>` branches merge open work branches
   together before each has individually landed.
@@ -185,7 +186,7 @@ All of [the family](#the-family), plus:
 
 ## References 📚
 
-- This repository runs on these workflows — `git log --grep '^MR:'` shows its
+- This repository runs on these workflows — `git log --grep '^MR[(:]'` shows its
   merge requests; the branch list shows its `integration/` and `work/` traffic.
 - gitflower — git-based development platform reading these conventions;
   deployable with the collection's `gitflower` role.

@@ -61,7 +61,7 @@ signalled however the project signals readiness. Under
 inside:
 
 ```
-MR: Integrate the open work branches
+MR(integration/merge-open-branches): Integrate the open work branches
 
 Merges work/feature/dovecot-role, work/feature/postfix-role and
 work/fix/tls-defaults; resolves the shared template conflict in the
@@ -156,5 +156,6 @@ that were never tested together.
 
 ## References 📚
 
-- `integration/merge-open-branches` in this repository — *"MR: Integrate the
-  open work branches"*, merged into `main` as one basket.
+- `integration/merge-open-branches` in this repository —
+  *"MR(integration/merge-open-branches): Integrate the open work branches"*,
+  merged into `main` as one basket.
