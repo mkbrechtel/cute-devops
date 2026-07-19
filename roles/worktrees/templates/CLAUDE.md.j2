@@ -97,7 +97,48 @@ its repository and open an MR like any other change.
 Open an MR against `main`; the maintainer reviews and merges. Don't push to
 `main` from a worktree branch — the bare repo's hooks will reject it.
 
-See [Shared Worktrees 🌳](https://cute-devops.patterns.how/patterns/workflows/shared-worktrees) for the full pattern.
+### Merge requests are empty commits
+
+An MR is an **empty commit on the work branch itself**, subject `MR: <title>`,
+body carrying the description. It marks the branch ready for merging —
+everything before it is work in flight, the MR commit is the boundary:
+
+```bash
+git commit --allow-empty -m "MR: <title>
+
+<description — motivation, summary of changes, anything the maintainer needs.>"
+```
+
+List open MRs (branches with an `MR:` commit not yet reachable from `main`):
+
+```bash
+git log --branches --not main --grep '^MR:' --oneline
+```
+
+**Claude: only create the MR commit once the user says the work is ready for
+review.** Committing work to the branch is normal and expected as you go — that
+already publishes it. The `MR:` commit is a separate, explicit signal that the
+user owns. Don't add it because a task looks finished, tests pass, or you're
+wrapping up; wait for the user to say so, or ask.
+
+### You don't need to push
+
+Committing is enough. Worktrees share the bare repo, so a commit updates the
+branch there directly — nothing to push for the work to be visible to everyone
+else. If the branch is also supposed to reach a remote, the repo's
+`reference-transaction` hook pushes it automatically to every remote configured
+with `remote.<name>.autopush=true`, in the background, on every ref update.
+
+So: don't run `git push`. If you're wondering whether a mirror push happened,
+read the log rather than pushing by hand:
+
+```bash
+cat "$(git rev-parse --git-common-dir)/autopush.log"
+```
+
+See [MR Commits 💌](https://cute-devops.patterns.how/patterns/workflows/mr-commits)
+and [Shared Worktrees 🌳](https://cute-devops.patterns.how/patterns/workflows/shared-worktrees)
+for the full patterns.
 
 <!-- Initial scaffold from osahris.cute_devops.worktrees. Once `main` has a canonical
      copy, the reference-transaction hook syncs it into the work directory on each
