@@ -10,18 +10,41 @@ set -euo pipefail
 
 payload="$(cat || true)"
 
+# The payload carries the worktree under `worktree_path` — the only
+# event-specific field Claude Code sends for this event.
 extract() {
   printf '%s' "$payload" \
     | sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\"\\([^\"]*\\)\".*/\\1/p" \
     | head -n1
 }
 path="$(extract worktree_path)"
-[ -z "$path" ] && path="$(extract path)"
 
 if [ -z "$path" ]; then
   echo "worktree-remove: no path in payload" >&2
   exit 0
 fi
+
+# Claude Code always sends an absolute path, but a relative name (the same
+# `<category>/<branch>` worktree-create accepts) is resolved against the base
+# directory of the repository around the CWD, so both spellings work by hand.
+case "$path" in
+  /*) ;;
+  *)
+    cwd_common="$(git rev-parse --git-common-dir 2>/dev/null)" || cwd_common=""
+    if [ -z "$cwd_common" ]; then
+      echo "worktree-remove: '$path' is relative and the CWD is not in a git repository" >&2
+      exit 1
+    fi
+    cwd_common="$(cd "$cwd_common" && pwd)"
+    cwd_workdir="$(git --git-dir="$cwd_common" config --default '' cute.workdir)"
+    if [ -n "$cwd_workdir" ]; then
+      path="$cwd_workdir/$path"
+    else
+      cwd_root="$(git --git-dir="$cwd_common" worktree list --porcelain | sed -n 's/^worktree //p' | head -n1)"
+      path="$cwd_root/work/$path"
+    fi
+    ;;
+esac
 
 # A worktree that is already gone from disk is a success, not an error: the
 # point of the hook is that the path no longer exists afterwards. Prune its

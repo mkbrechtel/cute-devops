@@ -20,15 +20,15 @@ set -euo pipefail
 
 payload="$(cat || true)"
 
-# Pull a name out of the JSON payload (try a few key variants).
+# The payload carries the requested worktree under `name` — that is the only
+# event-specific field Claude Code sends (alongside session_id, transcript_path,
+# cwd, prompt_id and agent_type, none of which we need).
 extract() {
   printf '%s' "$payload" \
     | sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\"\\([^\"]*\\)\".*/\\1/p" \
     | head -n1
 }
 name="$(extract name)"
-[ -z "$name" ] && name="$(extract worktree_name)"
-[ -z "$name" ] && name="$(extract worktree_branch)"
 
 # The repo's shared object/ref store. `cute.workdir` in its config marks the
 # shared-work-directory layout and resolves identically from the lookup pad or
@@ -38,6 +38,38 @@ common="$(cd "$(git rev-parse --git-common-dir)" && pwd)" || {
   exit 1
 }
 workdir="$(git --git-dir="$common" config --default '' cute.workdir)"
+
+# Where worktrees live for this repo — the shared work directory, or <clone>/work
+# for a personal checkout (the clone is the primary worktree, the first entry in
+# `git worktree list`).
+if [ -n "$workdir" ]; then
+  base_dir="$workdir"
+else
+  root="$(git --git-dir="$common" worktree list --porcelain | sed -n 's/^worktree //p' | head -n1)"
+  if [ -z "$root" ] || [ ! -d "$root" ]; then
+    echo "worktree-create: cannot resolve the primary checkout of $common" >&2
+    exit 1
+  fi
+  base_dir="$root/work"
+fi
+
+# The name may arrive either relative (`feature/add-dns-role`) or as an absolute
+# path (`/work/cute-devops/feature/add-dns-role`) — callers reasonably reach for
+# either. An absolute path is folded back to its relative name so both spellings
+# land on exactly the same worktree; one pointing outside this repo's base
+# directory is a mistake worth reporting rather than silently relocating.
+case "$name" in
+  /*)
+    case "$name" in
+      "$base_dir"/?*) name="${name#"$base_dir"/}" ;;
+      *)
+        echo "worktree-create: '$name' is outside $base_dir/" >&2
+        exit 1
+        ;;
+    esac
+    name="${name%/}"
+    ;;
+esac
 
 # This input is untrusted, so we validate strictly rather than sanitise — a bad
 # name is rejected outright.
@@ -84,18 +116,7 @@ fi
 # directory, so the hook behaves the same as a plain `git worktree add` done by
 # hand there.
 branch="$name"
-if [ -n "$workdir" ]; then
-  target="$workdir/$name"
-else
-  # Personal-clone layout: worktrees collect under <clone>/work/. The clone is
-  # the primary worktree — the first entry in `git worktree list`.
-  root="$(git --git-dir="$common" worktree list --porcelain | sed -n 's/^worktree //p' | head -n1)"
-  if [ -z "$root" ] || [ ! -d "$root" ]; then
-    echo "worktree-create: cannot resolve the primary checkout of $common" >&2
-    exit 1
-  fi
-  target="$root/work/$name"
-fi
+target="$base_dir/$name"
 
 if [ -e "$target/.git" ]; then
   printf '%s\n' "$target"
