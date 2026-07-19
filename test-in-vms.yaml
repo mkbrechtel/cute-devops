@@ -70,6 +70,7 @@
   hosts: devboxes
   become: true
   roles:
+    - logind
     - role: ttyd
       vars:
         ttyd_with_usr_local_bin_symlink: true
