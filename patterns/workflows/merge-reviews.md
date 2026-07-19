@@ -45,7 +45,7 @@ git worktree add /work/foo/review/merge-4f551d4 \
 
 Typical subject: the merge produced by an
 [Optimistic Integration 🧺](./optimistic-integration.md) basket, proposed via
-its `MR(…)` commit. The same shape reviews any merge commit.
+its `MR:` commit. The same shape reviews any merge commit.
 
 ### What lands on the branch
 
@@ -64,7 +64,7 @@ its `MR(…)` commit. The same shape reviews any merge commit.
 **Fix commits** — a finding that's easier to fix than to describe is fixed
 right there on the review branch; the commit resolves the finding.
 
-**A verdict** — an empty commit closing the review in the `MR(…)` grammar's
+**A verdict** — an empty commit closing the review in the `MR:` grammar's
 sibling forms, e.g.:
 
 ```

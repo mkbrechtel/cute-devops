@@ -57,7 +57,7 @@ stay open.
 
 When the combination builds, tests, and reads well, the basket is ready —
 signalled however the project signals readiness. Under
-[MR Commits 💌](./mr-commits.md), that's an `MR(<branch>):` commit describing what's
+[MR Commits 💌](./mr-commits.md), that's an `MR:` commit describing what's
 inside:
 
 ```
@@ -74,7 +74,7 @@ complete review surface (see [Merge Reviews 🔍](./merge-reviews.md)), so
 nothing about the pattern changes except the mark.
 
 The maintainer merging `integration/<topic>` into `main` concludes everything
-inside the basket at once. Where the branches carry `MR(…)` commits, each is
+inside the basket at once. Where the branches carry `MR:` commits, each is
 concluded along the way — it becomes reachable from `main` through the
 integration merge.
 
@@ -124,7 +124,7 @@ that were never tested together.
 
 - Name the topic after the basket's purpose (`integration/mail-stack`,
   `integration/merge-open-branches`), not after a date or a person.
-- List the merged branches when proposing the basket — in the `MR(…)` body, if
+- List the merged branches when proposing the basket — in the `MR:` body, if
   the project uses one — so the maintainer sees the basket's contents without
   walking the graph.
 - Run the full test suite on the integration branch — exercising the
@@ -139,7 +139,7 @@ that were never tested together.
 - [ ] Cut from `main`, merge candidate work branches, resolve conflicts in the
   integration branch.
 - [ ] Test the combination.
-- [ ] Signal readiness the project's way (typically an `MR(<branch>):` commit listing
+- [ ] Signal readiness the project's way (typically an `MR:` commit listing
   the contents); maintainer merges to `main`.
 - [ ] Clean up the integration branch afterwards.
 
@@ -157,4 +157,5 @@ that were never tested together.
 ## References 📚
 
 - `integration/merge-open-branches` in this repository —
-  *"MR(integration/merge-open-branches): Integrate the open work branches"*, merged into `main` as one basket.
+  *"MR(integration/merge-open-branches): Integrate the open work branches"*,
+  merged into `main` as one basket.
