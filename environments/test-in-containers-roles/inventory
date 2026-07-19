@@ -1,0 +1,32 @@
+# SPDX-FileCopyrightText: 2016 - 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+# SPDX-FileCopyrightText: 2020 - 2025 Uniklinik Köln
+# SPDX-FileCopyrightText: 2025 - 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+# General role topology: the coverage that used to live in
+# environments/test-in-vms/, as rootless podman system containers on the
+# shared network. One instance per role family, so a failure names the
+# family it came from.
+#   deploy = setup_deploy + the test_deploy_* probe roles
+#   devbox = ttyd
+#   ns     = knot_nameserver
+# Every instance also gets `common`, which is what the old [vms] group did.
+
+[instances]
+deploy
+devbox
+ns
+
+[setup_deploy]
+deploy
+
+[devboxes]
+devbox
+
+[knot_nameservers]
+ns
+
+# No instance yet — carried over from test-in-vms, which also defined the
+# vars without a host. Add one here when restic_client gets a test box.
+[backup_clients]
