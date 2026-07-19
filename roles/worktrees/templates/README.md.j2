@@ -65,6 +65,11 @@ git commit --allow-empty -m "MR: <title>
 git log --branches --not main --grep '^MR:' --oneline   # open MRs
 ```
 
+No push needed: worktrees share the bare repo, so committing already updates
+the branch there. Any onward push to a remote happens automatically via the
+`reference-transaction` autopush hook (per-remote `remote.<name>.autopush`);
+failures land in `$(git rev-parse --git-common-dir)/autopush.log`.
+
 See [MR Commits 💌](https://cute-devops.patterns.how/patterns/workflows/mr-commits)
 and [Shared Worktrees 🌳](https://cute-devops.patterns.how/patterns/workflows/shared-worktrees)
 for the full patterns.

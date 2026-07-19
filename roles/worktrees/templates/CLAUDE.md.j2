@@ -94,6 +94,21 @@ already publishes it. The `MR:` commit is a separate, explicit signal that the
 user owns. Don't add it because a task looks finished, tests pass, or you're
 wrapping up; wait for the user to say so, or ask.
 
+### You don't need to push
+
+Committing is enough. Worktrees share the bare repo, so a commit updates the
+branch there directly — nothing to push for the work to be visible to everyone
+else. If the branch is also supposed to reach a remote, the repo's
+`reference-transaction` hook pushes it automatically to every remote configured
+with `remote.<name>.autopush=true`, in the background, on every ref update.
+
+So: don't run `git push`. If you're wondering whether a mirror push happened,
+read the log rather than pushing by hand:
+
+```bash
+cat "$(git rev-parse --git-common-dir)/autopush.log"
+```
+
 See [MR Commits 💌](https://cute-devops.patterns.how/patterns/workflows/mr-commits)
 and [Shared Worktrees 🌳](https://cute-devops.patterns.how/patterns/workflows/shared-worktrees)
 for the full patterns.
