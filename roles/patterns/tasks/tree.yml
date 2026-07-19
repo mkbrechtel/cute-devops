@@ -1,0 +1,79 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+# Mirrors one content tree (`patterns/` or `anti-patterns/`) plus its index
+# file (`patterns.md` / `anti-patterns.md`) into {{ patterns_dest }}.
+#
+# filetree walks the source recursively, so directories and files are placed
+# individually. That costs a task per entry, but it gives us the exact set of
+# paths that *should* exist — which is what lets the prune step below drop
+# renamed or deleted patterns instead of leaving them behind forever.
+
+# filetree yields no entry for the tree root itself, so a flat tree (like
+# anti-patterns/, which has no subdirectories) would otherwise have nowhere to
+# copy its files into.
+- name: "Create the root directory for {{ tree }}"
+  ansible.builtin.file:
+    path: "{{ patterns_dest }}/{{ tree }}"
+    state: directory
+    owner: "{{ patterns_owner }}"
+    group: "{{ patterns_group }}"
+    mode: "{{ patterns_dir_mode }}"
+
+- name: "Create directories for {{ tree }}"
+  ansible.builtin.file:
+    path: "{{ patterns_dest }}/{{ tree }}/{{ item.path }}"
+    state: directory
+    owner: "{{ patterns_owner }}"
+    group: "{{ patterns_group }}"
+    mode: "{{ patterns_dir_mode }}"
+  loop: "{{ query('community.general.filetree', patterns_src ~ '/' ~ tree) }}"
+  loop_control:
+    label: "{{ tree }}/{{ item.path }}"
+  when: item.state == 'directory'
+
+- name: "Install files for {{ tree }}"
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ patterns_dest }}/{{ tree }}/{{ item.path }}"
+    owner: "{{ patterns_owner }}"
+    group: "{{ patterns_group }}"
+    mode: "{{ patterns_file_mode }}"
+  loop: "{{ query('community.general.filetree', patterns_src ~ '/' ~ tree) }}"
+  loop_control:
+    label: "{{ tree }}/{{ item.path }}"
+  when: item.state == 'file'
+
+- name: "Install the index for {{ tree }}"
+  ansible.builtin.copy:
+    src: "{{ patterns_src }}/{{ tree }}.md"
+    dest: "{{ patterns_dest }}/{{ tree }}.md"
+    owner: "{{ patterns_owner }}"
+    group: "{{ patterns_group }}"
+    mode: "{{ patterns_file_mode }}"
+
+- name: "Find what is currently under {{ tree }}"
+  ansible.builtin.find:
+    paths: "{{ patterns_dest }}/{{ tree }}"
+    recurse: true
+    file_type: any
+  register: patterns_present
+
+- name: "Remove stale entries under {{ tree }}"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop: >-
+    {{
+      patterns_present.files | map(attribute='path') | difference(
+        query('community.general.filetree', patterns_src ~ '/' ~ tree)
+        | map(attribute='path')
+        | map('regex_replace', '^', patterns_dest ~ '/' ~ tree ~ '/')
+        | list
+      ) | list
+    }}
+  loop_control:
+    label: "{{ item }}"

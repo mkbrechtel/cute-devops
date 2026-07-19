@@ -1,0 +1,26 @@
+# Cute DevOps Patterns! — local copy
+
+The pattern library that informs how this system is built and operated, mirrored
+here by the `osahris.cute_devops.patterns` Ansible role so people and agents can
+read it without network access.
+
+- **[Patterns! 🔷](patterns.md)** — `patterns/`: how we prefer to do things, and
+  why. Categories: `about/`, `workflows/`, `development/`, `operation/`, `meta/`.
+- **[Anti-Patterns! 🔻](anti-patterns.md)** — `anti-patterns/`: practices that
+  look reasonable and aren't, each pointing at what to do instead.
+
+Read them with anything that reads markdown:
+
+```bash
+ls {{ patterns_dest }}/patterns/
+grep -ril worktree {{ patterns_dest }}/patterns/
+```
+
+This directory is **read-only in practice** — Ansible overwrites it on every
+run, and entries that disappear upstream are pruned from here. To change a
+pattern, change it in the `cute-devops` repository and let the deploy carry it
+back.
+
+Upstream: <https://cute-devops.patterns.how>
+
+<!-- Managed by the osahris.cute_devops.patterns role. Do not edit in place. -->

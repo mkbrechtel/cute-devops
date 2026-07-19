@@ -1,0 +1,16 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+# Where the pattern library lands on the managed host. Users and agents read
+# it from here; nothing on the host writes to it.
+patterns_dest: /opt/cute-devops
+
+patterns_owner: root
+patterns_group: root
+# Directories are world-readable and traversable, files world-readable —
+# the library is documentation, not secrets.
+patterns_dir_mode: "0755"
+patterns_file_mode: "0644"
