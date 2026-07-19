@@ -1,0 +1,27 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+- name: Create the pattern library root
+  ansible.builtin.file:
+    path: "{{ patterns_dest }}"
+    state: directory
+    owner: "{{ patterns_owner }}"
+    group: "{{ patterns_group }}"
+    mode: "{{ patterns_dir_mode }}"
+
+- name: Install each pattern tree
+  ansible.builtin.include_tasks: tree.yml
+  loop: "{{ patterns_trees }}"
+  loop_control:
+    loop_var: tree
+
+- name: Install the README pointing at the library
+  ansible.builtin.template:
+    src: README.md.j2
+    dest: "{{ patterns_dest }}/README.md"
+    owner: "{{ patterns_owner }}"
+    group: "{{ patterns_group }}"
+    mode: "{{ patterns_file_mode }}"

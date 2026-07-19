@@ -20,8 +20,10 @@ layout. For each project it creates `{{ worktrees_base }}/<project>` (default
   `hotfix`, `refactor`, `test`, `ci`, `chore`, `docs`, `update`, `experiment`,
   `release`), each with the same `3775` permissions as the work directory.
   Worktrees live inside these; new category folders are created on demand.
-- **`CLAUDE.md`** — the landing doc explaining how to look things up and how to
-  spawn a worktree.
+- **`CLAUDE.md`** — the landing doc explaining how to look things up, how to
+  spawn a worktree, and where to read the pattern library that the
+  [patterns role](../patterns/README.md) installs on the host
+  (`worktrees_patterns_dir`, default `/opt/cute-devops`).
 
 The Claude Code hooks (`WorktreeCreate` / `WorktreeRemove` / `Stop`) are **not**
 part of this role anymore: they are deployed machine-wide to `/etc/claude/hooks`
@@ -85,6 +87,9 @@ Defaults (see `defaults/main.yml`):
 - `worktrees_default_group: devops`
 - `worktrees_default_owner: root`
 - `worktrees_base: /work`
+- `worktrees_patterns_dir: /opt/cute-devops` — where the scaffolded `CLAUDE.md`
+  tells agents to read the patterns; keep in sync with the `patterns` role's
+  `patterns_dest`.
 - `worktrees_default_categories:` — `feature`, `fix`, `hotfix`, `refactor`, `test`, `ci`, `chore`, `docs`, `update`, `experiment`, `release`.
 
 ## Example

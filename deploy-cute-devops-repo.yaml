@@ -47,6 +47,10 @@
     - role: git_hooks
     - role: repos
     - role: worktrees
+    # The pattern library, readable at /opt/cute-devops by anyone at a shell
+    # and by agents working in a worktree — the scaffolded CLAUDE.md points
+    # there.
+    - role: patterns
     - role: claude_code
       vars:
         # This host keeps its worktrees under /work, and the fleet view

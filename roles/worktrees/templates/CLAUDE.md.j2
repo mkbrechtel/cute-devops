@@ -65,6 +65,33 @@ Prefer the smallest base that gets the job done: merging a branch in is explicit
 and visible in the log, whereas basing on it silently pulls its (possibly
 in-review) history into yours.
 
+## Patterns we work by
+
+This project has a written pattern library, and a copy of it is installed on
+this machine at **`{{ worktrees_patterns_dir }}`** — read it there, no network
+needed:
+
+- **`{{ worktrees_patterns_dir }}/patterns.md`** and `patterns/` — how we prefer
+  to do things and why, grouped into `workflows/`, `development/`,
+  `operation/`, `about/`, `meta/`.
+- **`{{ worktrees_patterns_dir }}/anti-patterns.md`** and `anti-patterns/` —
+  practices that look reasonable and aren't, each pointing at what to do
+  instead.
+
+Before designing something non-trivial, check whether a pattern already covers
+it — branching and merge flow, deployment shape, issue tracking, and the
+worktree layout you're standing in are all written down there. Prefer the
+project's existing pattern over a fresh invention, and say which one you're
+following.
+
+```bash
+ls {{ worktrees_patterns_dir }}/patterns/
+grep -ril <topic> {{ worktrees_patterns_dir }}/patterns/ {{ worktrees_patterns_dir }}/anti-patterns/
+```
+
+The copy is read-only and refreshed by Ansible. To change a pattern, edit it in
+its repository and open an MR like any other change.
+
 ## Who merges what
 
 Open an MR against `main`; the maintainer reviews and merges. Don't push to
