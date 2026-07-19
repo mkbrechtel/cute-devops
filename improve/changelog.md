@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `logind` role: configures `systemd-logind` session retention via a drop-in,
+  keeping a user's `user@<uid>.service` manager and `/run/user/<uid>` alive
+  for `UserStopDelaySec=72h` after their last logout instead of the stock 10
+  seconds. Host-wide alternative to per-user `loginctl enable-linger`; lets
+  rootless podman containers and shell jobs survive a disconnect while still
+  reclaiming genuinely abandoned sessions
 - Pure Git Project Workflows pattern family in `patterns/workflows/`: the
   umbrella pattern (Pure Git Project Workflows 🌻) plus MR Commits 💌,
   Optimistic Integration 🧺, Merge Reviews 🔍, Continuous Review 🫧, and

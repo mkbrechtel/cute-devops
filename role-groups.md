@@ -24,6 +24,7 @@ groups:
       - timezone
       - keyboard
       - sysctl_tweaks
+      - logind
       - microcode
       - firmware
       - storage

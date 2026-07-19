@@ -1,0 +1,19 @@
+---
+
+# SPDX-FileCopyrightText: 2016 - 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+# SPDX-FileCopyrightText: 2020 - 2025 Uniklinik Köln
+# SPDX-FileCopyrightText: 2025 - 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+# How long logind keeps a user's service manager and runtime directory after
+# their last session ends. Spans a weekend, so work started before one is
+# still running afterwards; an untouched session is cleaned up after that.
+logind_user_stop_delay: "72h"
+
+# Terminate a user's session processes when they log out. Off, so processes
+# started in a session survive a disconnect for the retention window above.
+logind_kill_user_processes: false
+
+# Drop-in file managed by this role
+logind_dropin: /etc/systemd/logind.conf.d/10-session-retention.conf

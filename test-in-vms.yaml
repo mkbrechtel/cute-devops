@@ -82,6 +82,11 @@
   hosts: os_level
   become: true
   roles:
+    # Session retention is init configuration: the user-manager and
+    # runtime-directory lifecycle it governs only behaves like production
+    # under a real init with real logins.
+    - role: logind
+      tags: logind
     # A container cannot write a non-namespaced sysctl; only here does
     # setting the inotify watch limit actually mean anything.
     - role: sysctl_tweaks
