@@ -48,3 +48,13 @@
     - role: repos
     - role: worktrees
     - role: claude_code
+      vars:
+        # This host keeps its worktrees under /work, and the fleet view
+        # (`claude agents`) silently refuses to run the worktree hooks from a
+        # directory the user has not trusted. The role defaults the trust hook
+        # to off because it writes to user config; here it is wanted, and
+        # naming it in the standing deploy is what keeps a convergence run from
+        # removing what an ad-hoc run put there.
+        claude_code_with_trust_work_dirs: true
+        claude_code_trust_work_bases:
+          - /work
