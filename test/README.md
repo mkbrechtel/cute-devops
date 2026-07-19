@@ -8,7 +8,9 @@ SPDX-License-Identifier: EUPL-1.2
 
 # test-in-containers
 
-A fast, VM-free harness for the mail roles. It boots Debian-trixie
+A fast, VM-free harness for the collection's roles, and **the default**
+test path — `test-in-vms` is now reserved for OS-level work that needs a
+real kernel (see below). It boots Debian-trixie
 **system containers** — `systemd` as PID 1, full userspace, real
 `.service` units — as rootless podman quadlets in your user account and
 deploys the roles into them over the `containers.podman.podman`
@@ -21,16 +23,40 @@ see the "What This Is Not About" section there.
 
 ## Topologies
 
+- **roles** — the general role coverage: `deploy` (setup_deploy + the
+  `test_deploy_*` probes), `devbox` (ttyd), `ns` (knot_nameserver), each
+  on `common`. Run: `./test-in-containers-roles.yaml`
 - **single** — one `mail` instance runs postfix + dovecot + sympa
   co-located. Run: `./test-in-containers-single.yaml`
 - **multi** — the stack split across `mx` (inbound MX), `mo` (submission),
   `mb` (mailboxes/dovecot), `ml` (mailing lists) on a shared network.
   Run: `./test-in-containers-multi.yaml`
 
-Both build the one `test/Containerfile` image, issue a throwaway test CA
-(`test/ca/`), start instances from the templated
-`test/quadlets/cute-devops-test@.container` unit, and assert with the
-`test_mail_stack` role.
+All three build the one `test/Containerfile` image and start instances
+from the templated `test/quadlets/cute-devops-test@.container` unit. The
+two mail topologies additionally issue a throwaway test CA (`test/ca/`)
+and assert with the `test_mail_stack` role; **roles** sets no
+`test_ca_domain`, so CA issuance is skipped.
+
+### The VM harness — use it sparingly
+
+`test-in-vms.yaml` still exists, now scoped to **only** what a container
+cannot answer, because a container owns no kernel of its own: boot/init
+config, kernel and sysctl behaviour, firewall/netfilter rules, storage and
+partitioning, firmware and microcode, and true multi-host networking. It
+runs `common` plus `sysctl_tweaks`, `resolvconf`, `storage`, `firmware`
+and `microcode` on one incus VM.
+
+Everything the VM suite used to cover beyond that — `setup_deploy` and the
+`test_deploy_*` probes, `ttyd`, `knot_nameserver` — moved to the **roles**
+topology above, where it costs seconds instead of minutes.
+
+Reach for the VM path only when the container path genuinely can't answer
+the question: it needs an incus daemon on the machine running it (not
+installed on the current dev host), and every play added there is one
+someone has to keep a VM alive for. `sysctl_tweaks` is the clearest
+example of why it's kept — a rootless container silently keeps the host's
+`fs.inotify.max_user_watches`, so only the VM run actually tests it.
 
 ## Prerequisites
 
@@ -46,6 +72,7 @@ Both build the one `test/Containerfile` image, issue a throwaway test CA
 - Re-apply one role on one instance (seconds; instances stay up):
   `./test-in-containers-single.yaml --tags postfix`
   `./test-in-containers-multi.yaml --tags dovecot --limit mb`
+  `./test-in-containers-roles.yaml --tags knot`
 - Re-run just the assertions: `--tags test`
 - Rebuild the base image: `-e test_rebuild_image=true`
 - Teardown: `systemctl --user stop 'cute-devops-test@*'` then
@@ -55,7 +82,11 @@ Both build the one `test/Containerfile` image, issue a throwaway test CA
 
 ## Status / notes
 
-Both topologies deploy green and pass the end-to-end mail-flow probe
+**roles** deploys green on all three instances: knot answers its
+`test.example` SOA, ttyd 1.7.7 installs and symlinks, and the deploy
+units template out. `deploy` and `devbox` are fully idempotent.
+
+Both mail topologies deploy green and pass the end-to-end mail-flow probe
 (SMTP submission → LMTP delivery → IMAPS retrieval):
 
 - **single** — postfix + dovecot + sympa co-located; a message to
@@ -65,6 +96,11 @@ Both topologies deploy green and pass the end-to-end mail-flow probe
 
 Known limits / follow-ups:
 
+- **`knot_nameserver` is not idempotent** — the role sets `/var/lib/knot`
+  to `0750` and notifies a restart; knot puts it back to `0755` on start,
+  so every run reports 2 changes and restarts knot. Pre-existing and
+  container-independent (a VM behaves the same); a role fix, not a
+  harness fix.
 - **Milters (opendkim/opendmarc) are disabled in the tests.** On trixie
   the opendkim service can't bind its socket in postfix's spool dir under
   systemd sandboxing, and DKIM/DMARC need published DNS to be meaningful.

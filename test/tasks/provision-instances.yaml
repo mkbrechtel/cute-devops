@@ -5,14 +5,16 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 # Host-side provisioning for the test-in-containers harness, shared by
-# both topology playbooks. Builds the single base image, issues the test
-# CA, and starts one rootless quadlet instance per mail host on a shared
-# network. Runs on localhost (connection: local); the instances are then
-# configured by the deploy play over the podman connection.
+# every topology playbook. Builds the single base image, optionally issues
+# the test CA, and starts one rootless quadlet instance per host on a
+# shared network. Runs on localhost (connection: local); the instances are
+# then configured by the deploy plays over the podman connection.
 #
 # Expects:
-#   test_instances   - list of instance/hostnames to start (e.g. [mail] or [mx, mo, mb, ml])
-#   test_ca_domain    - mail domain the issued certs should also cover
+#   test_instances - list of instance/hostnames to start (e.g. [mail] or [mx, mo, mb, ml])
+#   test_ca_domain - optional; domain the issued certs should also cover.
+#                    Unset (the roles topology) skips CA issuance entirely —
+#                    only TLS-serving roles need the harness CA.
 ---
 - name: Enable systemd lingering for the invoking user
   ansible.builtin.command: loginctl enable-linger {{ ansible_user_id }}
@@ -37,6 +39,7 @@
   ansible.builtin.command:
     cmd: "{{ playbook_dir }}/test/ca/make-ca.sh {{ test_ca_domain }} {{ test_instances | join(' ') }}"
   changed_when: false
+  when: test_ca_domain | default('') | length > 0
 
 - name: Ensure the user quadlet directory exists
   ansible.builtin.file:

@@ -1,0 +1,56 @@
+#!/usr/bin/env -S ansible-playbook -i environments/test-in-containers-roles/
+
+# SPDX-FileCopyrightText: 2016 - 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+# SPDX-FileCopyrightText: 2020 - 2025 Uniklinik Köln
+# SPDX-FileCopyrightText: 2025 - 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+# General role topology: the coverage that used to live in test-in-vms.yaml,
+# now on the container harness. One instance per role family on the shared
+# network. See test/README.md for prerequisites and the iteration loop.
+---
+- name: Provision the test containers
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  become: false
+  tasks:
+    - name: Provision instances
+      ansible.builtin.import_tasks: test/tasks/provision-instances.yaml
+      vars:
+        test_instances: "{{ groups['instances'] }}"
+
+- name: Base configuration on every instance
+  hosts: instances
+  gather_facts: true
+  roles:
+    - role: common
+      tags: common
+
+- name: Test deploy roles
+  hosts: setup_deploy
+  gather_facts: true
+  roles:
+    - role: setup_deploy
+      tags: deploy
+    - role: test_deploy_ohai
+      tags: deploy
+    - role: test_deploy_fail
+      tags: deploy
+
+- name: Test devbox roles
+  hosts: devboxes
+  gather_facts: true
+  roles:
+    - role: ttyd
+      tags: ttyd
+      vars:
+        ttyd_with_usr_local_bin_symlink: true
+
+- name: Test knot nameserver role
+  hosts: knot_nameservers
+  gather_facts: true
+  roles:
+    - role: knot_nameserver
+      tags: knot

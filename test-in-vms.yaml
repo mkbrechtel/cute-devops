@@ -6,8 +6,28 @@
 #
 # SPDX-License-Identifier: EUPL-1.2
 
+# ⚠ USE THIS SPARINGLY.
+#
+# test-in-containers is the default test path (see test/README.md): it boots
+# system containers in seconds and covers services, config, packages and
+# systemd units. This playbook exists only for what a container genuinely
+# cannot answer, because it owns no kernel of its own:
+#
+#   - boot / init configuration
+#   - kernel and sysctl behaviour (a rootless container silently keeps the
+#     host's values — e.g. sysctl_tweaks' inotify watch limit)
+#   - firewall / netfilter rule sets
+#   - storage, partitioning and filesystems
+#   - firmware and microcode
+#   - true multi-host networking a shared podman network can't model
+#
+# Everything else belongs in test-in-containers-roles.yaml. Adding a play
+# here commits whoever runs the suite to keeping an incus daemon around, so
+# check the container path really can't cover it first.
+#
+# Requires incus on the machine running this (unlike the container path).
 ---
-- name: Test devops collection roles
+- name: Provision the OS-level test VM
   hosts: vms
   gather_facts: false
 
@@ -47,29 +67,33 @@
       ansible.builtin.command: cloud-init status --wait
       changed_when: false
 
-- name: Test devops collection roles
+# `common` stays here as the base the OS-level roles sit on. It is also
+# covered by test-in-containers-roles.yaml — the duplication is deliberate:
+# the container run proves the config lands, this one proves it still does
+# on a real kernel with a real init.
+- name: Base configuration
   hosts: vms
-  roles:
-    - common
-
-- name: Test knot nameserver role
-  hosts: knot_nameservers
   become: true
   roles:
-    - knot_nameserver
+    - role: common
+      tags: common
 
-- name: Test deploy roles
-  hosts: setup_deploy
+- name: Test OS-level roles that need a real kernel
+  hosts: os_level
   become: true
   roles:
-    - setup_deploy
-    - test_deploy_ohai
-    - test_deploy_fail
-
-- name: Test devbox roles
-  hosts: devboxes
-  become: true
-  roles:
-    - role: ttyd
+    # A container cannot write a non-namespaced sysctl; only here does
+    # setting the inotify watch limit actually mean anything.
+    - role: sysctl_tweaks
+      tags: sysctl
       vars:
-        ttyd_with_usr_local_bin_symlink: true
+        sysctl_tweaks_increase_maximum_inotify_user_watches: true
+    # Owns /etc/resolv.conf, which podman bind-mounts into containers.
+    - role: resolvconf
+      tags: resolvconf
+    - role: storage
+      tags: storage
+    - role: firmware
+      tags: firmware
+    - role: microcode
+      tags: microcode

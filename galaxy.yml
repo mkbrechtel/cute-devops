@@ -81,6 +81,7 @@ build_ignore:
   - Caddyfile
   - Containerfile
   - test-in-vms.yaml
+  - test-in-containers-roles.yaml
   - test-in-containers-single.yaml
   - test-in-containers-multi.yaml
 # A dict controlling use of manifest directives used in building the collection artifact. The key 'directives' is a

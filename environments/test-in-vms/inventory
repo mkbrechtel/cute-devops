@@ -4,19 +4,24 @@
 #
 # SPDX-License-Identifier: EUPL-1.2
 
+# ⚠ USE THIS SPARINGLY — it is the expensive, slow path.
+#
+# The default test path is test-in-containers (see test/README.md). A host
+# belongs in this inventory ONLY if a container genuinely cannot answer the
+# question: boot/init config, kernel and sysctl behaviour, firewall and
+# netfilter rules, storage/partitioning, firmware and microcode, or true
+# multi-host networking.
+#
+# Everything else — services, config files, packages, systemd units — goes
+# in environments/test-in-containers-roles/ instead, where it costs seconds
+# rather than minutes and needs no incus on the machine running it.
+#
+# Adding a host here means someone has to keep an incus daemon alive to run
+# the suite. Before you do, check the role really cannot be covered by a
+# container instance.
+
 [vms]
-cute-devops-test-common
+cute-devops-test-os
 
-[setup_deploy]
-cute-devops-test-common
-
-[devboxes]
-cute-devops-test-devbox
-
-[knot_nameservers]
-cute-devops-test-ns
-
-[vms:children]
-setup_deploy
-devboxes
-knot_nameservers
+[os_level]
+cute-devops-test-os

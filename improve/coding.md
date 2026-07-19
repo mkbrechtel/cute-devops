@@ -90,10 +90,17 @@ Before submitting changes, run the following checks in order:
    reuse lint
    ```
 
-3. **Integration testing** — run the VM test playbook to verify everything works end-to-end:
+3. **Integration testing** — run the container test playbooks to verify
+   everything works end-to-end (see `test/README.md` for prerequisites):
    ```bash
-   ./test-in-vms.yaml
+   ./test-in-containers-roles.yaml    # common, setup_deploy, ttyd, knot
+   ./test-in-containers-single.yaml   # mail stack, co-located
+   ./test-in-containers-multi.yaml    # mail stack, split across four instances
    ```
+
+   `./test-in-vms.yaml` covers the OS-level roles that need a real kernel
+   (sysctl, storage, firmware, microcode). It needs an incus daemon and is
+   slow — run it only when you touched something in that set.
 
 All three checks must pass before changes are considered ready.
 
