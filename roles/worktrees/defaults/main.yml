@@ -9,6 +9,9 @@ worktrees_default_owner: root
 # Base directory under which each project gets its shared work directory
 # (`{{ worktrees_base }}/<project>`).
 worktrees_base: /work
+# Where the pattern library is installed on this host (see the `patterns`
+# role's `patterns_dest`). Only used to point the scaffolded CLAUDE.md at it.
+worktrees_patterns_dir: /opt/cute-devops
 # Category folders to pre-create under the work directory, each with the same
 # 3775 permissions as the work directory itself. Categories are just folders —
 # there is no allowlist; the worktree hook creates a category folder on demand
