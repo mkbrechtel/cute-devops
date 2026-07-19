@@ -47,7 +47,7 @@ project decide how much process follows.
  work branch in a worktree          (Shared Worktrees 🌳)
        │
        ▼
- empty commit "MR: <title>"         (MR Commits 💌) — ready for merging,
+ empty commit "MR(<branch>): …"    (MR Commits 💌) — ready for merging,
        │                             or skipped where review followed the
        ▼                             commits all along (Continuous Review 🫧)
  project convention: review, QA,    (Merge Reviews 🔍,
@@ -70,7 +70,7 @@ application; a bare repo with hooks is enough.
 - [In-Tree Issues 🗂️](./in-tree-issues.md) — what to do: issues as markdown
   files in the repo, filed and resolved through the same lifecycle as code.
 - [MR Commits 💌](./mr-commits.md) — the ready signal: an empty commit
-  `MR: <title>` marks a branch ready for merging.
+  `MR(<branch>): <title>` marks a branch ready for merging.
 - [Optimistic Integration 🧺](./optimistic-integration.md) — combining
   in-flight work: `integration/<topic>` branches merge open work branches
   together before each has individually landed.
@@ -123,8 +123,8 @@ agent already has — `git`. Two layers carry an agent (or a new human) into
 them:
 
 - **Prompts teach.** The work directory's `CLAUDE.md` (and the README, for
-  humans) states the conventions in prose — worktree names, the `MR:` grammar,
-  who merges. With the right prompt an agent executes the full lifecycle
+  humans) states the conventions in prose — worktree names, the
+  `MR(<branch>):` grammar, who merges. With the right prompt an agent executes the full lifecycle
   unaided: cut a worktree, commit, mark ready, build an integration basket,
   cut the review at the merge. Same rules, two renderings.
 - **Hooks guard.** The bare repo's hooks enforce what prose can only request:
@@ -142,7 +142,7 @@ project can start with either layer and grow the other.
 - Hooks are the policy surface — keep the bare repo's `hooks/` and `config`
   writable by the maintainer only.
 - History is the audit log. Require signed commits or signed tags where
-  attribution matters; an empty `MR:` or verdict commit is signable like any
+  attribution matters; an empty `MR(…)` or verdict commit is signable like any
   other commit.
 
 ## Anti-Patterns ⚠️
@@ -162,7 +162,7 @@ project can start with either layer and grow the other.
   project actually needs them.
 - Write the project's chosen conventions into `CLAUDE.md` / `README.md` in the
   work directory, so humans and agents discover the same rules.
-- Keep the grammar boring and greppable: `MR:`, `integration/`, `review/`,
+- Keep the grammar boring and greppable: `MR(…)`, `integration/`, `review/`,
   `release/` — prefixes that `git log --grep` and `git for-each-ref` can
   answer questions about.
 
@@ -185,7 +185,7 @@ All of [the family](#the-family), plus:
 
 ## References 📚
 
-- This repository runs on these workflows — `git log --grep '^MR:'` shows its
+- This repository runs on these workflows — `git log --grep '^MR[(:]'` shows its
   merge requests; the branch list shows its `integration/` and `work/` traffic.
 - gitflower — git-based development platform reading these conventions;
   deployable with the collection's `gitflower` role.

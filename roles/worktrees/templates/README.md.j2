@@ -54,15 +54,16 @@ at least one `-`, at most 40 characters).
 Open an MR against `main`; the maintainer reviews and merges. Don't push to
 `main` from a worktree branch — the bare repo's hooks reject it.
 
-An MR is an empty commit on the work branch, subject `MR: <title>`, body
+An MR is an empty commit on the work branch, subject
+`MR(<category>/<branch>): <title>`, body
 carrying the description. It marks the branch ready for merging — add it when
 the work is ready for review, not before:
 
 ```bash
-git commit --allow-empty -m "MR: <title>
+git commit --allow-empty -m "MR(<category>/<branch>): <title>
 
 <description>"
-git log --branches --not main --grep '^MR:' --oneline   # open MRs
+git log --branches --not main --grep '^MR[(:]' --oneline   # open MRs
 ```
 
 No push needed: worktrees share the bare repo, so committing already updates

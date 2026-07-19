@@ -12,8 +12,8 @@ SPDX-License-Identifier: EUPL-1.2
 ## Overview 📋
 
 A merge request is an **empty commit on the work branch itself**, subject
-`MR: <title>`, body carrying the description. It marks the branch **ready for
-merging** — everything before it is work in flight; the MR commit is the
+`MR(<branch>): <title>`, body carrying the description. It marks the branch
+**ready for merging** — everything before it is work in flight; the MR commit is the
 boundary. What happens *after* the mark is deliberately open: the project's own
 convention decides whether a review, testing, QA, or nothing at all stands
 between the mark and the merge. The coupling is loose by design.
@@ -34,7 +34,7 @@ between the mark and the merge. The coupling is loose by design.
 ### The commit
 
 ```bash
-git commit --allow-empty -m "MR: Shared worktrees layout
+git commit --allow-empty -m "MR(feature/shared-worktrees): Shared worktrees layout
 
 Replace the treehouse scaffold with a dedicated worktrees role that
 manages the shared work directory.
@@ -42,8 +42,15 @@ manages the shared work directory.
 FF-able onto main — this empty commit marks the merge request."
 ```
 
-- **Subject**: `MR: <title>` — the `MR:` prefix is the grammar; the title reads
-  like a merge commit subject.
+- **Subject**: `MR(<branch>): <title>` — [Conventional
+  Commits](https://www.conventionalcommits.org/) shape, with `MR` as the type
+  and the **source branch** as the scope. The title reads like a merge commit
+  subject.
+- **Scope**: the branch the request is *from*. Where the project namespaces its
+  work branches, drop the shared prefix and keep the meaningful part —
+  `feature/new-api` for a branch stored as `work/feature/new-api`. The scope
+  keeps the request self-describing once the commit is quoted out of context,
+  in a merge log or an integration basket.
 - **Body**: the merge request description — motivation, summary of changes,
   anything a reviewer or maintainer needs.
 - **Empty**: `--allow-empty`, no tree change. The commit is pure metadata, so
@@ -54,12 +61,16 @@ attribution matters.
 
 ### Discovery
 
-Open MRs are branches whose history contains an `MR:` commit not yet reachable
-from `main`:
+Open MRs are branches whose history contains an `MR(…)` commit not yet
+reachable from `main`:
 
 ```bash
-git log --branches --not main --grep '^MR:' --oneline
+git log --branches --not main --grep '^MR[(:]' --oneline
 ```
+
+The `[(:]` character class matches both the scoped subject and the older
+unscoped `MR: <title>` form, so history written before the scope was
+introduced stays discoverable.
 
 That one-liner is the MR list. gitflower reads the same convention and renders
 it as a CLI and web view; nothing more than the refs is needed.
@@ -68,9 +79,9 @@ it as a CLI and web view; nothing more than the refs is needed.
 
 The maintainer's merge into `main` (or into an integration branch — see
 [Optimistic Integration 🧺](./optimistic-integration.md)) concludes the MR:
-the `MR:` commit becomes reachable from the mainline and drops out of the open
+the `MR(…)` commit becomes reachable from the mainline and drops out of the open
 list. The merge commit is the natural place to echo the MR title. A branch
-that is abandoned instead is concluded by archiving it — the `MR:` commit
+that is abandoned instead is concluded by archiving it — the `MR(…)` commit
 stays in its history as the record of what was asked.
 
 ### Loose coupling
@@ -87,7 +98,7 @@ own follow-ups on that signal:
 None of those change the MR grammar, and the grammar doesn't require any of
 them. The ritual as a whole is also optional: a branch under
 [Continuous Review 🫧](./continuous-review.md) — commits reviewed as they
-land — merges without any `MR:` commit, because there's no pent-up review the
+land — merges without any `MR(…)` commit, because there's no pent-up review the
 mark would trigger.
 
 ## Security Considerations 🔐
@@ -101,7 +112,7 @@ mark would trigger.
 ## Anti-Patterns ⚠️
 
 - ❌ Describing the MR somewhere else (chat, email, a forge) and leaving the
-  `MR:` body empty — the description belongs to the branch.
+  `MR(…)` body empty — the description belongs to the branch.
 - ❌ Putting the ready-marker in a file instead of an empty commit. A file
   change can conflict, alters the merged tree, and needs cleanup after merge;
   the empty commit does none of that.
@@ -119,7 +130,7 @@ mark would trigger.
 
 ## Implementation Checklist ✅
 
-- [ ] Document the `MR:` grammar in the project's contribution docs /
+- [ ] Document the `MR(<branch>):` grammar in the project's contribution docs /
   `CLAUDE.md`.
 - [ ] Provide the discovery one-liner (or gitflower) so open MRs are visible.
 - [ ] Decide and document what your project's convention between mark and
@@ -139,5 +150,5 @@ mark would trigger.
 
 ## References 📚
 
-- `git log --grep '^MR:'` in this repository — the collection's own merge
-  requests, e.g. *"MR: Shared worktrees layout"*.
+- `git log --grep '^MR[(:]'` in this repository — the collection's own merge
+  requests, e.g. *"MR(feature/shared-worktrees): Shared worktrees layout"*.

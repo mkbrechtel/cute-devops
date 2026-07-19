@@ -99,25 +99,27 @@ Open an MR against `main`; the maintainer reviews and merges. Don't push to
 
 ### Merge requests are empty commits
 
-An MR is an **empty commit on the work branch itself**, subject `MR: <title>`,
+An MR is an **empty commit on the work branch itself**, subject
+`MR(<category>/<branch>): <title>` (Conventional-Commits shape: `MR` type, the
+source branch minus the `work/` prefix as the scope),
 body carrying the description. It marks the branch ready for merging —
 everything before it is work in flight, the MR commit is the boundary:
 
 ```bash
-git commit --allow-empty -m "MR: <title>
+git commit --allow-empty -m "MR(<category>/<branch>): <title>
 
 <description — motivation, summary of changes, anything the maintainer needs.>"
 ```
 
-List open MRs (branches with an `MR:` commit not yet reachable from `main`):
+List open MRs (branches with an `MR(…)` commit not yet reachable from `main`):
 
 ```bash
-git log --branches --not main --grep '^MR:' --oneline
+git log --branches --not main --grep '^MR[(:]' --oneline
 ```
 
 **Claude: only create the MR commit once the user says the work is ready for
 review.** Committing work to the branch is normal and expected as you go — that
-already publishes it. The `MR:` commit is a separate, explicit signal that the
+already publishes it. The `MR(…)` commit is a separate, explicit signal that the
 user owns. Don't add it because a task looks finished, tests pass, or you're
 wrapping up; wait for the user to say so, or ask.
 

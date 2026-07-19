@@ -67,14 +67,14 @@ right now become [in-tree issues 🗂️](./in-tree-issues.md), same as in a
 ### Merging without ceremony
 
 When the branch is complete and the review stream has kept pace, the
-maintainer merges — no `MR:` commit, no at-merge review. The reviews travel
+maintainer merges — no `MR(…)` commit, no at-merge review. The reviews travel
 with the notes ref, so the judgment trail survives the merge exactly like the
 commits do.
 
 The coupling stays loose: continuous review and the
 [MR Commits 💌](./mr-commits.md) ritual coexist in one project. A long-running
 branch with an engaged reviewer runs continuously; a drive-by fix still gets
-marked with an `MR:` commit and reviewed at merge time. The grammar of each
+marked with an `MR(…)` commit and reviewed at merge time. The grammar of each
 convention tells everyone which track a branch is on.
 
 ## Security Considerations 🔐

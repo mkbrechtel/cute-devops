@@ -42,28 +42,30 @@ demand); `<slug>` is lowercase `a-z0-9`, starts with a letter, has at least one
 `-`, at most 40 chars. Base is `main` when starting from the work directory;
 inside a worktree, new branches stack on the current branch.
 
-## Propose a merge: the `MR:` commit
+## Propose a merge: the `MR(<branch>):` commit
 
-When the branch is ready for merging, add an empty commit — subject
-`MR: <title>`, body carrying the description (reuse-ready as a merge commit
-message; note mechanics like "FF-able onto main"):
+When the branch is ready for merging, add an empty commit. The subject follows
+Conventional Commits: `MR` as the type, the source branch (minus the `work/`
+prefix) as the scope. The body carries the description — reuse-ready as a merge
+commit message; note mechanics like "FF-able onto main":
 
 ```bash
-git commit --allow-empty -m "MR: <title>
+git commit --allow-empty -m "MR(<category>/<branch>): <title>
 
 <why and what; reference issues/<slug>.md if one exists>"
 ```
 
-List open MRs: `git log --branches --not main --grep '^MR:' --oneline`.
+List open MRs: `git log --branches --not main --grep '^MR[(:]' --oneline`
+(the character class also matches the older unscoped `MR:` subjects).
 What follows the mark — review, QA, nothing — is the project's convention, not
-yours to assume. A superseding `MR:` commit updates the request.
+yours to assume. A superseding `MR(<branch>):` commit updates the request.
 
 ## Integrate open branches: `integration/<topic>`
 
 To combine several open work branches into one reviewable, testable basket:
 cut `integration/<topic>` from `main`, `git merge --no-ff` each candidate
 branch, resolve conflicts in the merge commits, test the combination, and
-finish with an `MR:` commit listing the contents. Never do feature work on the
+finish with an `MR(<branch>):` commit listing the contents. Never do feature work on the
 integration branch — stack a work branch on it instead. If a branch isn't
 ready, rebuild the basket without it; integration branches are disposable
 scaffolding.
@@ -88,7 +90,7 @@ The alternative to the MR ritual: commits are reviewed as they land, each
 getting a `.review` keyed by its SHA on `refs/notes/reviews`
 (`gitflower review` scaffolds the delta since the last `[Review]` merge).
 Fixes are follow-up commits on the same branch. A branch whose review stream
-kept pace merges without any `MR:` commit.
+kept pace merges without any `MR(<branch>):` commit.
 
 ## Issues
 
