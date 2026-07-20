@@ -12,7 +12,7 @@ namespace: osahris
 name: cute_devops
 
 # The version of the collection. Must be compatible with semantic versioning
-version: 0.2.2
+version: 0.2.3
 
 # The path to the Markdown (.md) readme file. This path is relative to the root of the collection
 readme: README.md
