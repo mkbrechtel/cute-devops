@@ -14,6 +14,12 @@ claude_code_managed_settings_dropin: /etc/claude-code/managed-settings.d/50-cute
 # Deploy the Stop hook that blocks a session from ending while its worktree has
 # uncommitted changes.
 claude_code_with_require_clean: true
+# Managed `worktree.bgIsolation` policy: whether background sessions must
+# isolate into a worktree before editing. "none" pins isolation off
+# machine-wide, "worktree" enforces it (the Shared Worktrees setup). Managed
+# settings override user and project settings, so set this to false to omit
+# the key and leave the choice to lower settings scopes instead.
+claude_code_bg_isolation: none
 # Deploy the SessionStart hook that marks the work base directories as
 # trusted in the user's ~/.claude.json — trust is inherited from ancestors,
 # so one trusted base covers every pad and worktree below it. The fleet view
