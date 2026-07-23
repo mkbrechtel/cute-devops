@@ -6,77 +6,31 @@ SPDX-FileCopyrightText: 2025 - 2026 Goethe-University Frankfurt – Institute fo
 SPDX-License-Identifier: EUPL-1.2
 -->
 
-# Cute DevOps! 🦄
+# Cute DevOps! 🦄 has left Codeberg
 
-The ***Cute DevOps!*** library is a small, opinionated knowledge base
-about running computers — patterns we like, the patterns we *don't
-recommend*, and the Ansible roles we use to ship the ones we do.
+This repository is **archived on Codeberg** and no longer developed here.
 
-Heads up: this library is pretty opinionated; we're working on a
-comments section so you can drop in and tell us where we're wrong IYO
-(please only leave constructive critiques).
+**Development continues on GitHub:**
+👉 **https://github.com/mkbrechtel/cute-devops**
 
-The repository ships as the Ansible collection `osahris.cute_devops`
-and renders to the website at
-[cute-devops.patterns.how](https://cute-devops.patterns.how).
+## Why, with regrets
 
-## Patterns! 🔷
+Codeberg has been a good home for this project, and we deeply appreciate
+the work the Codeberg e. V. community puts into running a non-profit,
+community-owned forge. That is exactly the kind of infrastructure the
+free software world needs more of.
 
-Cute, helpful patterns for getting work done — operational habits,
-deployment shapes, and thinking tools. Patterns are organized by
-*approach* (e.g. Smalltown Infrastructure), *operation* (deployment,
-backup, monitoring), *development* (frontend), and *meta* (how to
-write a pattern, why "cuteness" matters).
+However, in July 2026 the Codeberg community voted to change its Terms of
+Use to prohibit projects written and maintained with heavy use of Large
+Language Models (see
+[Protecting our FLOSS commons from LLMs](https://blog.codeberg.org/protecting-our-floss-commons-from-llms.html)).
 
-→ [Browse the patterns library 🔷](./patterns.md)
+Cute DevOps! is openly developed with substantial LLM assistance under
+human maintenance. We respect the outcome of the vote, even though we see
+the role of these tools in free software differently — so rather than
+argue about the boundaries of the policy, we comply with it and move
+development elsewhere. We leave with genuine regret, and we wish the
+Codeberg community all the best.
 
-## Anti-Patterns! 🔻
-
-Critiques of industry patterns that aren't cute: practices that
-look reasonable on the surface but produce friction, opaque
-systems, or unhappy operators in the long run. Each entry names
-what it is, why it's tempting, and what to do instead — usually a
-pointer back to the [Patterns!](#patterns-) library.
-
-→ [See the anti-patterns 🔻](./anti-patterns.md)
-
-## Deploy! 🚀
-
-The Ansible roles that implement the patterns. Each role has a
-README documenting variables, examples, and the patterns it ships.
-The website's *Deploy!* sidebar groups them by purpose
-(Orchestrators, System, Shells, Containers, Backup, Monitoring,
-Deployment, Tooling, Ecosystem).
-
-```bash
-ansible-galaxy collection install osahris.cute_devops
-```
-
-Requirements: Ansible ≥ 2.14.3 on Debian 13 (trixie).
-
-→ [Browse role documentation 🚀](./roles.md)
-
-## Improve! ✨
-
-Documentation for working on the collection itself: coding
-conventions, contribution flow, the release process, and the
-project's planning surface (`issues/*.feature.md`,
-`issues/*.pattern.md`, `issues/*.bug.md`).
-
-→ [Read the developer docs ✨](./improve.md)
-
-## License
-
-EUPL-1.2 by default. Per-file `SPDX-License-Identifier` headers are
-authoritative; the carve-outs are:
-
-- `roles/restic_client/` and `roles/restic_server/` —
-  AGPL-3.0-or-later (carve-out for a co-author's contributions; see
-  [`improve/contributing.md`](./improve/contributing.md)).
-- Third-party powerline-go integration snippets
-  (`roles/bash_shell/files/powerline-go.sh`,
-  `roles/zsh_shell/files/powerline-go.zsh`,
-  `roles/fish_shell/files/global/fish_prompt.fish`) —
-  GPL-3.0-only.
-- Google Noto Emoji glyphs used as section icons / favicon
-  (`website/static/*.svg`) — Apache-2.0.
+See [DISTRIBUTION.md](DISTRIBUTION.md) for all the places this project is
+published.
