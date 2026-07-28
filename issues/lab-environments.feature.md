@@ -52,7 +52,7 @@ ExecStopPost=/bin/sh -c 'systemctl --user exit $EXIT_STATUS'
 
 which becomes the exit status of `lab-factory-runner@<id>.service` itself — a job exiting 3 produced a runner exiting 3, and a successful job produced 0. Whatever supervises the runner therefore learns the result without parsing anything. Job output goes to the journal, since the units are children of the manager rather than of the runner.
 
-Each slot has its own service user. Two labs sharing one account are not isolated from each other: one lab read the other's container storage, because `ProtectSystem=strict` stops writes but nothing stops reads between processes of the same UID. A per-slot user with `StateDirectoryMode=0700` refuses that read. Slots are recycled by wiping the slot's state directory between runs, which is also what makes a run reproducible.
+Each slot has its own service user. Two labs sharing one account are not isolated from each other: one lab read the other's container storage, because `ProtectSystem=strict` stops writes but nothing stops reads between processes of the same UID. Masking each sibling path would close it, but only for the paths remembered; a per-slot user with `StateDirectoryMode=0700` refuses the read structurally. Slots are recycled by wiping the slot's state directory between runs, which is also what makes a run reproducible.
 
 ## Design notes
 
@@ -61,6 +61,10 @@ The arrangement is constrained in ways that are not obvious, each established by
 **System scope is required.** An unprivileged user manager cannot create a mount namespace directly, so it builds one out of a user namespace, and that namespace consumes the single UID mapping rootless podman needs. Every sandboxing directive that makes a lab a lab — `ProtectHome=`, `PrivateTmp=`, `ProtectSystem=` — reproduces this independently. Units started by PID 1 are unaffected.
 
 **The lab user is dedicated and unprivileged.** Rootless podman reaches its subuid range through the setuid helper `newuidmap`, so the unit runs with `NoNewPrivileges=no`, which leaves every setuid binary live. A lab running as an account with `sudo` would therefore be one command from root.
+
+This is the one boundary the exec restrictions cannot draw. Filesystem, process, network, IPC and temporary-directory isolation all come from unit directives, but a privileged identity defeats them from inside, and no directive compensates for it. The account carries that part.
+
+**Processes need `PrivatePIDs=yes`.** `ProtectProc=invisible` hides other users' processes and nothing else: a unit could see and signal a same-user sibling's processes, with 278 of them visible. Under `PrivatePIDs=yes` the same probe found neither the process nor its `/proc` entry and saw three, and rootless podman is unaffected.
 
 **`DynamicUser=` cannot host a lab that needs several UIDs.** It enables `NoNewPrivileges=` implicitly and non-disableably, because its UIDs are recycled; the setuid helper is inert as a result and containers are confined to a single UID. Allocating subuid ranges does not help and actively hurts, since podman then attempts a mapping it cannot install rather than falling back. Labs that need multi-UID images take an ordinary user from a recycled pool.
 
