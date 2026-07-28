@@ -32,6 +32,28 @@ The role provisions per lab:
 
 `PrivateNetwork=yes` completes the isolation. Containers still reach each other over an internal bridge, so multi-service workloads develop normally offline.
 
+The same unit shape serves two purposes. Started on its default target it is a development lab a person or an agent attaches to; started on a CI target by `lab-factory-runner@<id>.service` it is a build.
+
+## CI runs
+
+A continuous-integration run is the same lab with a different initial target. `lab-factory-runner@<id>.service` takes a slot number, runs as that slot's service user, and starts the manager on the repository's CI target rather than its default one:
+
+```ini
+ExecStart=/usr/lib/systemd/systemd --user --unit=ci.target
+```
+
+`ci.target` and the units it pulls in are ordinary user units from the project's `devenv/`, so a CI run is described the same way a development environment is, and the two share definitions instead of duplicating them. Ordering, readiness and dependency semantics come from systemd rather than a pipeline language.
+
+The run ends when the manager exits. A job unit hands its status back on the way out:
+
+```ini
+ExecStopPost=/bin/sh -c 'systemctl --user exit $EXIT_STATUS'
+```
+
+which becomes the exit status of `lab-factory-runner@<id>.service` itself — a job exiting 3 produced a runner exiting 3, and a successful job produced 0. Whatever supervises the runner therefore learns the result without parsing anything. Job output goes to the journal, since the units are children of the manager rather than of the runner.
+
+Each slot has its own service user. Two labs sharing one account are not isolated from each other: one lab read the other's container storage, because `ProtectSystem=strict` stops writes but nothing stops reads between processes of the same UID. A per-slot user with `StateDirectoryMode=0700` refuses that read. Slots are recycled by wiping the slot's state directory between runs, which is also what makes a run reproducible.
+
 ## Design notes
 
 The arrangement is constrained in ways that are not obvious, each established by measurement on a Debian 13 host with podman 5.4 and systemd 257.
@@ -54,7 +76,9 @@ Repositories reach labs as bare repos under `/srv/repos`, which is how [push-to-
 
 ## Open questions
 
-**Build labs.** Whether continuous-integration labs use a recycled pool of ordinary users, or accept `DynamicUser=` with single-UID containers and `ignore_chown_errors` in exchange for genuinely ephemeral identity.
+**Slot allocation.** How a run claims a free slot and how many slots a host offers, given that each is a standing service user rather than something created on demand.
+
+**Disposal.** Whether a slot's storage lives in `StateDirectory=`, wiped by the runner on stop, or in `RuntimeDirectory=`, which systemd removes automatically at the cost of holding image layers in memory.
 
 **The vendor service.** How a lab requests an artefact it does not have, and what publishes archives into the read-only vendor directory.
 
