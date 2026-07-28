@@ -62,7 +62,9 @@ The arrangement is constrained in ways that are not obvious, each established by
 
 **The lab user is dedicated and unprivileged.** Rootless podman reaches its subuid range through the setuid helper `newuidmap`, so the unit runs with `NoNewPrivileges=no`, which leaves every setuid binary live. A lab running as an account with `sudo` would therefore be one command from root.
 
-This is the one boundary the exec restrictions cannot draw. Filesystem, process, network, IPC and temporary-directory isolation all come from unit directives, but a privileged identity defeats them from inside, and no directive compensates for it. The account carries that part.
+The setuid binaries a lab does not need are masked, which narrows what that concession costs. This host carries nineteen and podman needs two, `newuidmap` and `newgidmap`; `InaccessiblePaths=` on `sudo`, `pkexec`, `su` and `newgrp` removes the rest. The mask holds independently of the account — a lab run deliberately as a member of `sudo` was refused all four while podman still mapped its full range and ran containers — so escalation is blocked in one direction only, and an administrator outside can still `sudo -u <lab>` inward.
+
+What remains with the account is the residue: a privileged identity plus any setuid path left unmasked, or a vulnerability in one that must stay. Filesystem, process, network, IPC and temporary-directory isolation all come from unit directives; this last part does not.
 
 **Processes need `PrivatePIDs=yes`.** `ProtectProc=invisible` hides other users' processes and nothing else: a unit could see and signal a same-user sibling's processes, with 278 of them visible. Under `PrivatePIDs=yes` the same probe found neither the process nor its `/proc` entry and saw three, and rootless podman is unaffected.
 
