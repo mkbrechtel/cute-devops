@@ -56,6 +56,11 @@
     owner: "{{ _repo_owner }}"
     group: "{{ _repo_group }}"
     recurse: true
+    # Stay inside the repository. A bare repo can legitimately contain a link
+    # pointing out of it — .claude/worktrees is one, aimed at the shared work
+    # directory — and a recursive chown that follows it takes ownership of
+    # every checkout there, away from the people working in them.
+    follow: false
 
 - name: "Strip group-write on policy paths in {{ _repo_path }}"
   ansible.builtin.command:
