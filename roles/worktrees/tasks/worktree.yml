@@ -102,3 +102,29 @@
     cmd: "rmdir --ignore-fail-on-non-empty {{ _wt_workdir }}/.claude/hooks {{ _wt_workdir }}/.claude"
   changed_when: false
   failed_when: false
+
+# Claude Code will only switch a session straight from one worktree into
+# another when the target sits under <git-common-dir>/.claude/worktrees; ours
+# live in the shared work directory instead, so that switch is refused and a
+# session has to ExitWorktree back to the pad between every hop.
+#
+# Pointing the path it looks for at the work directory satisfies it without
+# moving anything: the worktrees stay where the WorktreeCreate hook puts them
+# and keep their <category>/<branch> layout, and the same directory is simply
+# also reachable under the name Claude Code expects.
+- name: "Ensure {{ _wt_repo }}/.claude exists for the worktrees link"
+  ansible.builtin.file:
+    path: "{{ _wt_repo }}/.claude"
+    state: directory
+    owner: "{{ _wt_owner }}"
+    group: "{{ _wt_group }}"
+    mode: "0755"
+
+- name: "Link {{ _wt_repo }}/.claude/worktrees at {{ _wt_workdir }}"
+  ansible.builtin.file:
+    path: "{{ _wt_repo }}/.claude/worktrees"
+    src: "{{ _wt_workdir }}"
+    state: link
+    owner: "{{ _wt_owner }}"
+    group: "{{ _wt_group }}"
+    follow: false
