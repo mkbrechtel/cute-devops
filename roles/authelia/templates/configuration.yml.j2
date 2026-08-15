@@ -75,7 +75,7 @@ identity_providers:
 {% for c in authelia_oidc_clients %}
       - client_id: '{{ c.client_id }}'
         client_name: '{{ c.client_name | default(c.client_id) }}'
-        client_secret: '{{ c.client_secret_digest | default(c.client_secret | authelia_pbkdf2_digest(c.client_id)) }}'
+        client_secret: '{{ c.client_secret_digest | default(c.client_secret | password_hash('sha512', c.client_id | hash('sha256') | truncate(16, True, ''))) }}'
         public: false
         authorization_policy: {{ c.authorization_policy | default('two_factor') }}
         consent_mode: {{ c.consent_mode | default('implicit') }}

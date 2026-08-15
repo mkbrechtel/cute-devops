@@ -27,7 +27,7 @@ Installed from the pinned upstream release tarball (checksum vendored in `files/
 - `authelia_users` (default: `{}`) — Authelia user entries merged on top
 - `authelia_default_policy` (default: `two_factor`) — for `<zone>` and `*.<zone>`; `authelia_access_rules` are matched first
 - `authelia_notifier` (default: `filesystem`) — `filesystem` writes enrolment links to `authelia_notification_file`; `smtp` uses `authelia_smtp_*`
-- `authelia_oidc_clients` (default: `[]`) — relying parties; each `client_id`, `client_secret` (plaintext, hashed at render time — or `client_secret_digest`), `redirect_uris`, optional `scopes`, `authorization_policy`, `consent_mode`. The provider is enabled when non-empty
+- `authelia_oidc_clients` (default: `[]`) — relying parties; each `client_id`, `client_secret` (plaintext, hashed at render time to a sha512-crypt digest Authelia validates against — or `client_secret_digest`), `redirect_uris`, optional `scopes`, `authorization_policy`, `consent_mode`. The provider is enabled when non-empty
 - `authelia_session_*`, `authelia_webauthn_*`, `authelia_oidc_*_lifespan` — see `defaults/main.yaml`
 - `authelia_extra_config` (default: `{}`) — merged by Authelia from `conf.d/50-extra.yml`
 - `authelia_listen` (default: the unix socket) — `tcp://127.0.0.1:9091` when the reverse proxy cannot reach host sockets
