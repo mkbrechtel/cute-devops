@@ -12,7 +12,7 @@ SPDX-License-Identifier: EUPL-1.2
 # deny the browser is redirected to the portal.
 
 (authelia) {
-	forward_auth unix/{{ authelia_socket_dir }}/http.sock {
+	forward_auth {{ authelia_caddy_upstream }} {
 		uri /api/authz/forward-auth
 		copy_headers Remote-User>X-Auth-Request-User Remote-User>X-Auth-Request-Preferred-Username Remote-Email>X-Auth-Request-Email
 	}

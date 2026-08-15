@@ -13,7 +13,6 @@
   listen: restart authelia
 
 - name: Reload caddy
-  ansible.builtin.systemd:
-    name: caddy
-    state: reloaded
+  ansible.builtin.command: "{{ authelia_caddy_reload_command }}"
+  changed_when: true
   listen: reload caddy

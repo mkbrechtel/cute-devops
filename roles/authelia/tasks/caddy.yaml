@@ -10,8 +10,8 @@
     src: caddy-vhost.j2
     dest: "{{ authelia_caddy_conf_dir }}/{{ authelia_vhost }}"
     owner: root
-    group: caddy
-    mode: "0640"
+    group: "{{ authelia_caddy_conf_group }}"
+    mode: "{{ authelia_caddy_conf_mode }}"
   notify: reload caddy
 
 - name: Write the forward-auth snippet
@@ -19,6 +19,6 @@
     src: caddy-snippet.j2
     dest: "{{ authelia_caddy_conf_dir }}/_snippet.authelia"
     owner: root
-    group: caddy
-    mode: "0640"
+    group: "{{ authelia_caddy_conf_group }}"
+    mode: "{{ authelia_caddy_conf_mode }}"
   notify: reload caddy

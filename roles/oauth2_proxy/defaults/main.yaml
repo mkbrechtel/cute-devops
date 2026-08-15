@@ -25,6 +25,10 @@ oauth2_proxy_issuer_url: "https://auth.{{ oauth2_proxy_zone }}"
 #     client_id: oauth2-proxy
 #     client_secret: "{{ vault_... }}"
 #     issuer_url: https://auth.example.com   # default oauth2_proxy_issuer_url
+#     listen: unix              # or 127.0.0.1:4180 when the proxy cannot reach host sockets
+#     vhost: oauth2.example.com # optional: serve the instance on its own vhost, so any
+#                               # vhost in the zone can be gated with one registered
+#                               # callback; implies a .<zone> cookie
 #     cookie_domains: []        # host-only cookie; [".example.com"] for one login per zone
 #     email_domains: ["*"]
 #     allowed_groups: []        # OIDC groups required at login
@@ -36,9 +40,14 @@ oauth2_proxy_instances: {}
 # Set when the provider does not mark emails verified.
 oauth2_proxy_allow_unverified_email: false
 
-# Drop a (oauth2-proxy-<name>) snippet per instance into /etc/caddy/conf.d.
+# Drop a (oauth2-proxy-<name>) snippet (and the vhost, if any) per instance
+# into the Caddy fragment directory and reload. Group/mode/reload command are
+# what the collection's caddy role expects; a differently run Caddy sets its own.
 oauth2_proxy_configure_caddy: true
 oauth2_proxy_caddy_conf_dir: /etc/caddy/conf.d
+oauth2_proxy_caddy_conf_group: caddy
+oauth2_proxy_caddy_conf_mode: "0640"
+oauth2_proxy_caddy_reload_command: systemctl reload caddy
 
 # systemd sandboxing on the unit. Off only where the kernel features are
 # unavailable, e.g. rootless test containers.

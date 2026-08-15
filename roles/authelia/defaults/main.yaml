@@ -18,6 +18,9 @@ authelia_zone: "{{ domain }}"
 authelia_vhost: "auth.{{ authelia_zone }}"
 authelia_socket_dir: "/run/https/{{ authelia_vhost }}"
 authelia_socket_group: https-socket-access
+# Where Authelia listens: the socket above, or a loopback port
+# (tcp://127.0.0.1:9091) when the reverse proxy cannot reach host sockets.
+authelia_listen: "unix://{{ authelia_socket_dir }}/http.sock?umask=0117"
 
 authelia_config_dir: /etc/authelia
 authelia_data_dir: /var/lib/authelia
@@ -71,9 +74,19 @@ authelia_oidc_refresh_token_lifespan: 90 minutes
 # Merged recursively over the rendered configuration.
 authelia_extra_config: {}
 
-# Drop the portal vhost into /etc/caddy/conf.d and reload caddy.
+# Drop the portal vhost and the (authelia) snippet into the Caddy fragment
+# directory and reload. Group/mode/reload command are what the collection's
+# caddy role expects; a differently run Caddy sets its own.
 authelia_configure_caddy: true
 authelia_caddy_conf_dir: /etc/caddy/conf.d
+authelia_caddy_conf_group: caddy
+authelia_caddy_conf_mode: "0640"
+authelia_caddy_reload_command: systemctl reload caddy
+# Upstream as Caddy addresses it, derived from authelia_listen.
+authelia_caddy_upstream: >-
+  {{ ('unix/' ~ authelia_socket_dir ~ '/http.sock')
+     if authelia_listen.startswith('unix://')
+     else authelia_listen | regex_replace('^tcp://', '') }}
 
 # systemd sandboxing on the unit. Off only where the kernel features are
 # unavailable, e.g. rootless test containers.

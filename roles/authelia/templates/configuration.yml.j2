@@ -13,7 +13,7 @@ SPDX-License-Identifier: EUPL-1.2
 theme: auto
 
 server:
-  address: 'unix://{{ authelia_socket_dir }}/http.sock?umask=0117'
+  address: '{{ authelia_listen }}'
 
 log:
   level: info

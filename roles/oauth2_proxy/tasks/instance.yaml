@@ -52,7 +52,17 @@
     src: caddy-snippet.j2
     dest: "{{ oauth2_proxy_caddy_conf_dir }}/_snippet.oauth2-proxy-{{ instance.key }}"
     owner: root
-    group: caddy
-    mode: "0640"
+    group: "{{ oauth2_proxy_caddy_conf_group }}"
+    mode: "{{ oauth2_proxy_caddy_conf_mode }}"
   when: oauth2_proxy_configure_caddy
+  notify: reload caddy
+
+- name: Write the caddy vhost for {{ instance.key }}
+  ansible.builtin.template:
+    src: caddy-vhost.j2
+    dest: "{{ oauth2_proxy_caddy_conf_dir }}/{{ instance.value.vhost }}"
+    owner: root
+    group: "{{ oauth2_proxy_caddy_conf_group }}"
+    mode: "{{ oauth2_proxy_caddy_conf_mode }}"
+  when: oauth2_proxy_configure_caddy and instance.value.vhost is defined
   notify: reload caddy

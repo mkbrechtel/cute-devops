@@ -13,3 +13,9 @@ oauth2_proxy_tarball: "oauth2-proxy-{{ oauth2_proxy_version }}.linux-{{ oauth2_p
 oauth2_proxy_download_url: "{{ oauth2_proxy_github_repo_url }}/releases/download/{{ oauth2_proxy_version }}/{{ oauth2_proxy_tarball }}"
 oauth2_proxy_release_dir: "{{ oauth2_proxy_install_dir }}/{{ oauth2_proxy_version }}"
 oauth2_proxy_binary: "{{ oauth2_proxy_release_dir }}/oauth2-proxy-{{ oauth2_proxy_version }}.linux-{{ oauth2_proxy_arch }}/oauth2-proxy"
+
+# Per-instance derived values (instance = current dict2items entry).
+oauth2_proxy_instance_listen: "{{ instance.value.listen | default('unix') }}"
+oauth2_proxy_instance_upstream: >-
+  {{ ('unix/' ~ oauth2_proxy_run_dir ~ '/' ~ instance.key ~ '.sock')
+     if oauth2_proxy_instance_listen == 'unix' else oauth2_proxy_instance_listen }}

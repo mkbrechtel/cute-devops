@@ -8,19 +8,34 @@ SPDX-License-Identifier: EUPL-1.2
 # MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
 #
 # Gate a vhost with `import oauth2-proxy-{{ instance.key }}` at the top of
-# its block. /oauth2/* is served by oauth2-proxy (sign-in, callback,
-# sign-out); every other request is checked and, on allow, carries
-# X-Auth-Request-User / -Email / -Preferred-Username.
+# its block. Every request is checked and, on allow, carries
+# X-Auth-Request-User / -Email / -Preferred-Username; on deny the browser
+# is sent to sign in.
+{% if instance.value.vhost is defined %}
+# Sign-in, callback and sign-out live on https://{{ instance.value.vhost }}.
+
+(oauth2-proxy-{{ instance.key }}) {
+	forward_auth {{ oauth2_proxy_instance_upstream }} {
+		uri /oauth2/auth
+		copy_headers X-Auth-Request-User X-Auth-Request-Email X-Auth-Request-Preferred-Username
+		@denied status 401
+		handle_response @denied {
+			redir * https://{{ instance.value.vhost }}/oauth2/start?rd={scheme}://{host}{uri} 302
+		}
+	}
+}
+{% else %}
+# /oauth2/* (sign-in, callback, sign-out) is served on the gated vhost itself.
 
 (oauth2-proxy-{{ instance.key }}) {
 	handle /oauth2/* {
-		reverse_proxy unix/{{ oauth2_proxy_run_dir }}/{{ instance.key }}.sock {
+		reverse_proxy {{ oauth2_proxy_instance_upstream }} {
 			header_up X-Real-IP {remote_host}
 			header_up X-Forwarded-Uri {uri}
 		}
 	}
 	@gated not path /oauth2/*
-	forward_auth @gated unix/{{ oauth2_proxy_run_dir }}/{{ instance.key }}.sock {
+	forward_auth @gated {{ oauth2_proxy_instance_upstream }} {
 		uri /oauth2/auth
 		copy_headers X-Auth-Request-User X-Auth-Request-Email X-Auth-Request-Preferred-Username
 		@denied status 401
@@ -29,3 +44,4 @@ SPDX-License-Identifier: EUPL-1.2
 		}
 	}
 }
+{% endif %}

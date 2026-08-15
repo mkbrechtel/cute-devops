@@ -30,7 +30,8 @@ Installed from the pinned upstream release tarball (checksum vendored in `files/
 - `authelia_oidc_clients` (default: `[]`) — relying parties; each `client_id`, `client_secret` (plaintext, hashed at render time — or `client_secret_digest`), `redirect_uris`, optional `scopes`, `authorization_policy`, `consent_mode`. The provider is enabled when non-empty
 - `authelia_session_*`, `authelia_webauthn_*`, `authelia_oidc_*_lifespan` — see `defaults/main.yaml`
 - `authelia_extra_config` (default: `{}`) — merged by Authelia from `conf.d/50-extra.yml`
-- `authelia_configure_caddy` (default: `true`)
+- `authelia_listen` (default: the unix socket) — `tcp://127.0.0.1:9091` when the reverse proxy cannot reach host sockets
+- `authelia_configure_caddy` (default: `true`), `authelia_caddy_conf_dir` / `_group` / `_mode` / `_reload_command` — where fragments go and how Caddy is reloaded; defaults match the `caddy` role
 
 Secrets (JWT, session, storage encryption, OIDC HMAC, issuer key) are generated on the host on first run under `/etc/secrets/authelia/`, `0640 root:authelia`, and reach Authelia as `AUTHELIA_*_FILE` variables. Enrolment links with the filesystem notifier land in `/var/lib/authelia/notification.txt`.
 

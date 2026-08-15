@@ -14,7 +14,6 @@
   listen: restart oauth2-proxy
 
 - name: Reload caddy
-  ansible.builtin.systemd:
-    name: caddy
-    state: reloaded
+  ansible.builtin.command: "{{ oauth2_proxy_caddy_reload_command }}"
+  changed_when: true
   listen: reload caddy

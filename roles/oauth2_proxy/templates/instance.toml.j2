@@ -8,8 +8,15 @@ SPDX-License-Identifier: EUPL-1.2
 # MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
 {% set i = instance.value %}
 
+{% if oauth2_proxy_instance_listen == 'unix' %}
 http_address = "unix://{{ oauth2_proxy_run_dir }}/{{ instance.key }}.sock"
+{% else %}
+http_address = "{{ oauth2_proxy_instance_listen }}"
+{% endif %}
 reverse_proxy = true
+{% if i.vhost is defined %}
+redirect_url = "https://{{ i.vhost }}/oauth2/callback"
+{% endif %}
 upstreams = ["static://202"]
 
 provider = "oidc"
@@ -33,8 +40,9 @@ cookie_httponly = true
 cookie_samesite = "lax"
 cookie_expire = "{{ i.cookie_expire | default('168h') }}"
 cookie_refresh = "{{ i.cookie_refresh | default('1h') }}"
-{% if i.cookie_domains | default([]) | length > 0 %}
-cookie_domains = {{ i.cookie_domains | to_json }}
+{% set cookie_domains = i.cookie_domains | default(['.' ~ oauth2_proxy_zone] if i.vhost is defined else []) %}
+{% if cookie_domains | length > 0 %}
+cookie_domains = {{ cookie_domains | to_json }}
 {% endif %}
 whitelist_domains = {{ i.whitelist_domains | default(['.' ~ oauth2_proxy_zone]) | to_json }}
 

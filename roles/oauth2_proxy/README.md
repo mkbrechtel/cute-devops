@@ -23,9 +23,9 @@ Installed from the pinned upstream release tarball (checksum vendored in `files/
 
 - `oauth2_proxy_version` (default: `v7.15.3`)
 - `oauth2_proxy_zone` (default: `{{ domain }}`), `oauth2_proxy_issuer_url` (default: `https://auth.<zone>`)
-- `oauth2_proxy_instances` (default: `{}`) — per instance: `client_id`, `client_secret`, optional `issuer_url`, `cookie_domains` (default `[]` — the cookie is bound to the gated vhost; `[".<zone>"]` gives one login for every subdomain, and every subdomain the session), `email_domains` (`["*"]`), `allowed_groups`, `cookie_expire` (`168h`), `cookie_refresh` (`1h`), `whitelist_domains` (`[".<zone>"]`), `extra` (verbatim options)
+- `oauth2_proxy_instances` (default: `{}`) — per instance: `client_id`, `client_secret`, optional `issuer_url`, `listen` (`unix`, the default socket, or `127.0.0.1:4180`), `vhost` (serve the instance at its own name, e.g. `oauth2.example.com`, so any vhost in the zone can be gated with the one callback `https://oauth2.example.com/oauth2/callback` registered; implies a `.<zone>` cookie), `cookie_domains` (default `[]` — the cookie is bound to the gated vhost; `[".<zone>"]` gives one login for every subdomain, and every subdomain the session), `email_domains` (`["*"]`), `allowed_groups`, `cookie_expire` (`168h`), `cookie_refresh` (`1h`), `whitelist_domains` (`[".<zone>"]`), `extra` (verbatim options)
 - `oauth2_proxy_allow_unverified_email` (default: `false`)
-- `oauth2_proxy_configure_caddy` (default: `true`)
+- `oauth2_proxy_configure_caddy` (default: `true`), `oauth2_proxy_caddy_conf_dir` / `_group` / `_mode` / `_reload_command` — where fragments go and how Caddy is reloaded; defaults match the `caddy` role
 
 The cookie secret is generated on the host on first run under `/etc/secrets/oauth2-proxy/`.
 

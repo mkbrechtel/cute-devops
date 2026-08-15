@@ -4,9 +4,11 @@ SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.n
 
 SPDX-License-Identifier: EUPL-1.2
 #}
-# This file is managed by the osahris.cute_devops.authelia Ansible role!
+# This file is managed by the osahris.cute_devops.oauth2_proxy Ansible role!
 # MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
 
-{{ authelia_vhost }} {
-	reverse_proxy {{ authelia_caddy_upstream }}
+{{ instance.value.vhost }} {
+	reverse_proxy {{ oauth2_proxy_instance_upstream }} {
+		header_up X-Real-IP {remote_host}
+	}
 }
