@@ -1,5 +1,5 @@
 ---
-status: draft
+status: implemented
 ---
 
 <!--
@@ -12,12 +12,12 @@ SPDX-License-Identifier: EUPL-1.2
 
 # Forward auth
 
-> **Pattern.** Cross-cutting convention. The deliverable is a consolidated definition that lives in `patterns/` once the ticket is closed; the [oauth2-proxy](oauth2-proxy.feature.md) role, the [reverse-proxy](reverse-proxy.pattern.md) backends, and any service-role that wants a gate in front reference this document.
+> **Pattern.** Implemented by the [Authelia](../features/authelia.md) and [oauth2-proxy](../features/oauth2-proxy.md) roles on top of [Caddy](../features/caddy.md); any service role that wants a gate in front follows this document.
 
 ## Goal
 
 One convention for putting authentication in front of a web service, written so that **the service role never learns which scheme authenticated the user**.
-The pattern fixes the contract — a verdict, plus identity headers on the way in — and leaves the scheme pluggable: OIDC through [oauth2-proxy](oauth2-proxy.feature.md) on a host that has an identity provider, something cheaper on a host that does not.
+The pattern fixes the contract — a verdict, plus identity headers on the way in — and leaves the scheme pluggable: OIDC through [oauth2-proxy](../features/oauth2-proxy.md) on a host that has an identity provider, something cheaper on a host that does not.
 A deployer can start on the cheap scheme and swap in OIDC later without touching anything behind the gate.
 
 ## Model
@@ -39,9 +39,9 @@ Where a scheme needs no separate gate process — basic auth, client certificate
 This is the whole of what a service role may assume.
 
 - **Verdict.** 200 means allow. Any other status is the gate's answer to the client — a 401, or a redirect into a login flow — and the rpx surfaces it rather than proxying.
-- **Identity headers.** On allow, the request reaching the app carries `X-Auth-Request-User`, `X-Auth-Request-Email` and `X-Auth-Request-Preferred-Username`. `X-Auth-Request-User` is the stable local identifier, and the one the per-user routers in [ttyd](ttyd.feature.md) and [code-server](code-server.feature.md) key on. The spelling is oauth2-proxy's; a gate that answers in another one — Authelia emits `Remote-User`, `Remote-Email`, `Remote-Name` — is renamed to it in the rpx snippet (Caddy: `copy_headers Remote-User>X-Auth-Request-User`), so the contract holds at the app regardless of the gate.
+- **Identity headers.** On allow, the request reaching the app carries `X-Auth-Request-User`, `X-Auth-Request-Email` and `X-Auth-Request-Preferred-Username`. `X-Auth-Request-User` is the stable local identifier, and the one the per-user routers in [ttyd](../../issues/ttyd.feature.md) and [code-server](../../issues/code-server.feature.md) key on. The spelling is oauth2-proxy's; a gate that answers in another one — Authelia emits `Remote-User`, `Remote-Email`, `Remote-Name` — is renamed to it in the rpx snippet (Caddy: `copy_headers Remote-User>X-Auth-Request-User`), so the contract holds at the app regardless of the gate.
 - **Identity only.** Group and role lists never flow through as headers. A scheme may *gate* on them, but what reaches the app is who the user is, not what they may do.
-- **Trust.** App sockets are unbound from the network ([reverse-proxy.pattern.md](reverse-proxy.pattern.md)), so within the trust boundary below the rpx chain is the only producer of `X-Auth-Request-*`. Spoofing is structurally impossible rather than filtered against, and apps may trust the headers as they arrive. This bullet is the one that fails first if the boundary is stretched, which is why the boundary is part of the contract and not advice.
+- **Trust.** App sockets are unbound from the network ([reverse-proxy.pattern.md](reverse-proxy.md)), so within the trust boundary below the rpx chain is the only producer of `X-Auth-Request-*`. Spoofing is structurally impossible rather than filtered against, and apps may trust the headers as they arrive. This bullet is the one that fails first if the boundary is stretched, which is why the boundary is part of the contract and not advice.
 - **Endpoint.** The rpx addresses the gate by URL, so a gate that is its own process may be local or on a neighbouring machine — but only within one trust boundary, as below. A local one publishes on a unix socket like any other service in the collection, which is the default.
 
 A service role that speaks this contract works under every scheme below, and gains nothing from knowing which one is deployed.
@@ -50,8 +50,8 @@ A service role that speaks this contract works under every scheme below, and gai
 
 The two defaults answer the two different questions from the design note above.
 
-- **[Authelia](authelia.feature.md)** — a local gate carrying its own user store, passkeys with a password fallback. The default for a host that stands alone: the rpx calls Authelia's authz endpoint directly.
-- **[oauth2-proxy](oauth2-proxy.feature.md)** — a local gate in front of an OIDC provider, one login across the zone. The default once several hosts want that login to be the same one; the provider is the zone's one Authelia, which is a provider as well as a gate.
+- **[Authelia](../features/authelia.md)** — a local gate carrying its own user store, passkeys with a password fallback. The default for a host that stands alone: the vhost imports the `(authelia)` Caddy snippet and the rpx calls Authelia's authz endpoint directly.
+- **[oauth2-proxy](../features/oauth2-proxy.md)** — a local gate in front of an OIDC provider. The default once several hosts want the same login; the vhost imports the `(oauth2-proxy-<instance>)` snippet, and the provider is the zone's one Authelia, which is a provider as well as a gate.
 
 Cheaper alternates, where a gate process is more than the service warrants:
 
@@ -66,7 +66,7 @@ For a single-user devbox that is frequently the right answer and costs nothing t
 
 ### Why the contract is the pattern
 
-The valuable, stable thing here is not any one gate — it is that [ttyd](ttyd.feature.md) and [code-server](code-server.feature.md) route per user off a header without caring where the header came from.
+The valuable, stable thing here is not any one gate — it is that [ttyd](../../issues/ttyd.feature.md) and [code-server](../../issues/code-server.feature.md) route per user off a header without caring where the header came from.
 Fixing the contract first means the cheap scheme and the full SSO scheme are the same shape to everything downstream, and swapping them is a reverse-proxy edit rather than a service-role change.
 It also keeps the collection honest about the gap between "authenticated" and "authorized": the gate answers the first, the app is still responsible for the second.
 
@@ -83,7 +83,7 @@ Three reasons, in descending order of how much they should worry a deployer:
 - **Every request pays the round trip.** The sub-request carries the original headers and no body, so bandwidth is trivial; the cost is one round trip plus the gate's session check, per gated request. Sub-millisecond over a local socket, a few milliseconds inside a datacentre, tens of them across the internet — and paid again on every asset a page pulls.
 
 Two things soften that last one where this collection actually spends it.
-[ttyd](ttyd.feature.md) and [code-server](code-server.feature.md) are websocket applications: the gate is consulted once at the upgrade, and the long-lived connection that follows carries the session without further checks, so the per-request cost lands on the initial page load rather than on use.
+[ttyd](../../issues/ttyd.feature.md) and [code-server](../../issues/code-server.feature.md) are websocket applications: the gate is consulted once at the upgrade, and the long-lived connection that follows carries the session without further checks, so the per-request cost lands on the initial page load rather than on use.
 An rpx that can cache the verdict against the session cookie for a short TTL (nginx's `proxy_cache` over `auth_request`) collapses the repeat cost for the assets too.
 
 The websocket exemption has a security edge worth stating: a session revoked at the gate does not reach a connection that is already open, so revocation takes effect when the socket drops rather than at once.
@@ -94,7 +94,7 @@ For a terminal or an editor that is usually acceptable; a service where it is no
 What tempts a deployer toward a remote gate is one login covering several machines.
 Forward auth is the wrong instrument for it: it puts a cross-network hop on *every request* in order to buy a login that happens *once*.
 
-The shape that gets the same result is a **local gate on each host, pointed at a shared identity provider** — the [oauth2-proxy](oauth2-proxy.feature.md) scheme.
+The shape that gets the same result is a **local gate on each host, pointed at a shared identity provider** — the [oauth2-proxy](../features/oauth2-proxy.md) scheme.
 The cross-network exchange happens during the login redirect and then stops; afterwards every check is local, against a cookie the local gate validates by itself.
 The remote dependency is reduced to login time, where an outage means "cannot sign in" rather than "everything is down", and where one round trip is invisible.
 
@@ -105,7 +105,7 @@ Neither of them is a gate on the far side of the internet.
 ### Why not in-line chaining
 
 An earlier draft of this pattern also described putting the gate *in* the data path, between the rpx and the app socket, as an alternative shape.
-That is dropped. [oauth2-proxy.feature.md](oauth2-proxy.feature.md) already scopes itself to forward-auth only, so the second shape had no implementation; and it cannot express the per-path and per-user rpx logic that the two service roles above actually need.
+That is dropped. [oauth2-proxy.feature.md](../features/oauth2-proxy.md) already scopes itself to forward-auth only, so the second shape had no implementation; and it cannot express the per-path and per-user rpx logic that the two service roles above actually need.
 One shape, spelled out once, is worth more than two shapes with one of them unused.
 
 ### Authz levers a service role gets
@@ -117,6 +117,6 @@ One shape, spelled out once, is worth more than two shapes with one of them unus
 ## Open questions
 
 - **Is "forward auth" the right name?** It describes the mechanism, but two of the three schemes have no separate gate to forward to — the rpx answers its own sub-question. A contract-shaped name (`auth-gate`, `authenticated-identity`) would cover all three honestly. Recommendation: keep `forward-auth`, since it matches the Caddy directive and the rpx-native schemes are legitimately the degenerate case of the same shape.
-- **Do the cheap alternates need tickets at all?** [Authelia](authelia.feature.md) now covers the no-provider case properly, which was the gap basic auth and mTLS were being considered for. They may be worth writing up as documented rpx snippets rather than roles — or worth dropping to keep the scheme list short.
+- **Do the cheap alternates need tickets at all?** [Authelia](../features/authelia.md) now covers the no-provider case properly, which was the gap basic auth and mTLS were being considered for. They may be worth writing up as documented rpx snippets rather than roles — or worth dropping to keep the scheme list short.
 - **Do the alternates keep the `X-Auth-Request-*` spelling?** It is oauth2-proxy's, not a standard. Recommendation: yes — it is what the service roles already read, and inventing a neutral spelling would mean a translation shim in the default scheme for no gain.
 - **Does the basic-auth scheme need a session at all?** Browsers cache basic credentials for the realm, so probably not; worth confirming against a websocket-heavy client like code-server before it is written up.

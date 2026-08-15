@@ -18,6 +18,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- New `caddy` role: host-wide reverse proxy for the web-service socket
+  pattern (`/run/https/<vhost>/http.sock`), Debian package by default,
+  upstream build with DNS modules opt-in for wildcard certificates,
+  admin API on a unix socket, deployer-owned `conf.d/` fragments
+- New `authelia` role: forward-auth gate and OpenID Connect provider at
+  `auth.<zone>` — passkeys, users from `users`, SQLite, secrets generated
+  on the host, `(authelia)` Caddy snippet, OIDC clients hashed at render
+  time
+- New `oauth2_proxy` role: per-host forward-auth gate signing in against
+  the zone's Authelia, cookie sessions, one `oauth2-proxy@<name>` unit
+  and `(oauth2-proxy-<name>)` Caddy snippet per instance
+- `docs/features/` and `docs/patterns/`: the completed caddy, authelia,
+  oauth2-proxy tickets and the forward-auth / reverse-proxy patterns
+  live there now
+- Container test harness: `auth` instance deploying the three roles
+  and asserting discovery and gate verdicts through Caddy
 - `logind` role: configures `systemd-logind` session retention via a drop-in,
   keeping a user's `user@<uid>.service` manager and `/run/user/<uid>` alive
   for `UserStopDelaySec=72h` after their last logout instead of the stock 10

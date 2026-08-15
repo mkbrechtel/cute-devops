@@ -84,6 +84,11 @@ groups:
     roles:
       - repos
       - worktrees
+  - name: Web
+    roles:
+      - caddy
+      - authelia
+      - oauth2_proxy
   - name: Tooling
     roles:
       - ansible

@@ -14,7 +14,7 @@ SPDX-License-Identifier: EUPL-1.2
 
 ## Goal
 
-A Traefik-based reverse proxy role that serves application sockets following the [web-service socket pattern](reverse-proxy.pattern.md). Sits on the outside of `/run/https/<vhost>/http.sock`, terminates HTTPS/TLS, handles ACME. Alternate to the default Caddy backend; chosen per host when a deployer prefers Traefik's provider model and dashboard.
+A Traefik-based reverse proxy role that serves application sockets following the [web-service socket pattern](../docs/patterns/reverse-proxy.md). Sits on the outside of `/run/https/<vhost>/http.sock`, terminates HTTPS/TLS, handles ACME. Alternate to the default Caddy backend; chosen per host when a deployer prefers Traefik's provider model and dashboard.
 
 This ticket is **scoped to feature parity with Caddy** — same socket contract, same directory conventions, same default / opt-in mode split. The deep design questions Caddy went through are not re-litigated here; this role exists for deployers who specifically want Traefik.
 
@@ -28,7 +28,7 @@ Directionality (matching the pattern ticket): **left = outside, right = inside**
 - **ACME**: HTTP-01 by default. DNS-01 is an opt-in upgrade for sites that have decided they want wildcard certs; Traefik has a wide selection of DNS provider integrations built in (no separate plugin install). The collection's own [dns.feature.md](dns.feature.md) is one way to satisfy it via RFC 2136; third-party DNS providers are equally valid.
 - **Dynamic vhost routing** to an FQDN-named socket directory is supported via Traefik's file provider with a host-rule template — the same zero-config-add idea as Caddy's `{host}` block, expressed in Traefik's syntax. Optional, not required.
 - **Hot reload** via Traefik's file provider watching `/etc/traefik/dynamic/`. No restart, no dropped connections.
-- **OIDC gating via oauth2-proxy** is out of scope here. Traefik supports both shapes oauth2-proxy needs (in-line via a dedicated service, and `forwardAuth` middleware) — see [oauth2-proxy.feature.md](oauth2-proxy.feature.md).
+- **OIDC gating via oauth2-proxy** is out of scope here. Traefik supports both shapes oauth2-proxy needs (in-line via a dedicated service, and `forwardAuth` middleware) — see [oauth2-proxy.feature.md](../docs/features/oauth2-proxy.md).
 
 ## Distribution
 

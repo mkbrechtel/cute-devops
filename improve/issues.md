@@ -24,7 +24,7 @@ issues/
 ├── airgapped-escrow.feature.md
 ├── backup-restic.feature.md
 ├── integrate-patterns-library.feature.md
-├── forward-auth.pattern.md
+├── reverse-proxy-nginx.feature.md
 ├── reuse-lint-failures.bug.md
 └── …
 ```

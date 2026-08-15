@@ -1,5 +1,5 @@
 ---
-status: reviewed
+status: implemented
 ---
 
 <!--
@@ -48,7 +48,7 @@ Left is the outside, right is the inside. Backend is handled right side, Fronten
 
 ## Terminology
 
-This ticket only defines the reverse-proxy-specific terms. Cross-cutting terms — *project*, *service*, *host* — are defined once in [project-service-terminology.pattern.md](project-service-terminology.pattern.md) and are assumed here.
+This ticket only defines the reverse-proxy-specific terms. Cross-cutting terms — *project*, *service*, *host* — are defined once in [project-service-terminology.pattern.md](../../issues/project-service-terminology.pattern.md) and are assumed here.
 
 | Term | Meaning |
 |---|---|
@@ -61,12 +61,12 @@ This ticket only defines the reverse-proxy-specific terms. Cross-cutting terms �
 
 ## Implementations
 
-Default: [Caddy](reverse-proxy-caddy.feature.md).
+Default: [Caddy](../features/caddy.md).
 
 Alternates:
 
-- [Traefik](reverse-proxy-traefik.feature.md)
-- [nginx](reverse-proxy-nginx.feature.md)
+- [Traefik](../../issues/reverse-proxy-traefik.feature.md)
+- [nginx](../../issues/reverse-proxy-nginx.feature.md)
 
 An app role only needs to follow this pattern to be servable by any of them.
 
@@ -78,10 +78,10 @@ An app role only needs to follow this pattern to be servable by any of them.
 /run/https/<vhost>/http.sock
 ```
 
-`<vhost>` is the fully-qualified hostname the service is reachable at — `matrix.example.com`, `element.example.com`, etc. **Not** the abstract service name from [project-service-terminology.pattern.md](project-service-terminology.pattern.md); the abstract service may be `matrix`, but the directory under `/run/https/` is always the FQDN. Using the FQDN aligns the path with how reverse proxies route (by Host header / SNI) and lets the dynamic-routing pattern (where the rpx substitutes `{host}` into the path) work without a separate naming convention.
+`<vhost>` is the fully-qualified hostname the service is reachable at — `matrix.example.com`, `element.example.com`, etc. **Not** the abstract service name from [project-service-terminology.pattern.md](../../issues/project-service-terminology.pattern.md); the abstract service may be `matrix`, but the directory under `/run/https/` is always the FQDN. Using the FQDN aligns the path with how reverse proxies route (by Host header / SNI) and lets the dynamic-routing pattern (where the rpx substitutes `{host}` into the path) work without a separate naming convention.
 
 That's it. One HTTP socket per vhost, at a known path.
 
 - **Protocol on the socket**: plain HTTP. TLS is the outer layer's job.
-- **Ownership / perms**: directory `0750 <service-user>:https-socket-access`; socket `0660`. The shared `https-socket-access` system group is the access channel — any RPX (Caddy under its `caddy` user, nginx under `www-data`, Traefik under `traefik`, …) joins this group to read sockets, regardless of which user it normally runs as. A dedicated group rather than reusing `www-data` because each RPX has its own conventional user; the shared access channel is the group, not any one user.
+- **Ownership / perms**: directory `2750 <service-user>:https-socket-access` — setgid, so the socket the service creates inherits the group; socket `0660`. The shared `https-socket-access` system group is the access channel — any RPX (Caddy under its `caddy` user, nginx under `www-data`, Traefik under `traefik`, …) joins this group to read sockets, regardless of which user it normally runs as. A dedicated group rather than reusing `www-data` because each RPX has its own conventional user; the shared access channel is the group, not any one user.
 - **Containers**: podman with `--network=none` plus a bind-mount of `/run/https/<vhost>/`. The container writes its socket into that directory. No bridge network, no exposed ports, no localhost TCP.

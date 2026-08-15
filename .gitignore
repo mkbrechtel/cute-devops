@@ -8,3 +8,4 @@
 /.vscode
 mkosi.cache/
 mkosi.output/
+__pycache__/

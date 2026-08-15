@@ -14,7 +14,7 @@ SPDX-License-Identifier: EUPL-1.2
 
 ## Goal
 
-An nginx-based reverse proxy role that serves application sockets following the [web-service socket pattern](reverse-proxy.pattern.md). Sits on the outside of `/run/https/<vhost>/http.sock`, terminates HTTPS/TLS, handles ACME via a companion. Alternate to the default Caddy backend; chosen per host when a deployer prefers nginx's tuning surface and operational familiarity.
+An nginx-based reverse proxy role that serves application sockets following the [web-service socket pattern](../docs/patterns/reverse-proxy.md). Sits on the outside of `/run/https/<vhost>/http.sock`, terminates HTTPS/TLS, handles ACME via a companion. Alternate to the default Caddy backend; chosen per host when a deployer prefers nginx's tuning surface and operational familiarity.
 
 This ticket is **scoped to feature parity with Caddy** — same socket contract, same directory conventions, same default / opt-in mode split. The deep design questions Caddy went through are not re-litigated here; this role exists for deployers who specifically want nginx.
 
@@ -28,7 +28,7 @@ Directionality (matching the pattern ticket): **left = outside, right = inside**
 - **ACME**: HTTP-01 by default via a companion (`certbot` with the nginx plugin, default; `lego` is an alternative). DNS-01 is an opt-in upgrade for sites that have decided they want wildcard certs; the companion handles the DNS plugin and stores certs under `/etc/letsencrypt/`. The collection's own [dns.feature.md](dns.feature.md) is one way to satisfy DNS-01 via RFC 2136; third-party DNS providers with companion plugins are equally valid.
 - **Dynamic vhost routing** to an FQDN-named socket directory is supported via nginx's `$host` variable in `proxy_pass unix:/run/https/$host/http.sock`, gated by a `map` of expected hostnames. Same security stance as Caddy's wildcard block. Optional, not required.
 - **Hot reload** via `nginx -t && systemctl reload nginx` on config change. No restart, no dropped connections, but `-t` validation is mandatory because a bad fragment breaks every vhost on the host.
-- **OIDC gating via oauth2-proxy** is out of scope here. nginx supports both shapes oauth2-proxy needs (in-line via `proxy_pass`, and `auth_request` for sub-request checks) — see [oauth2-proxy.feature.md](oauth2-proxy.feature.md).
+- **OIDC gating via oauth2-proxy** is out of scope here. nginx supports both shapes oauth2-proxy needs (in-line via `proxy_pass`, and `auth_request` for sub-request checks) — see [oauth2-proxy.feature.md](../docs/features/oauth2-proxy.md).
 
 ## Distribution
 

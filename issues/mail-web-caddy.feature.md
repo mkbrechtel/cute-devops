@@ -15,16 +15,22 @@ SPDX-License-Identifier: EUPL-1.2
 ## Goal
 
 Serve the mail stack's web interfaces through the collection's Caddy
-reverse proxy ([reverse-proxy-caddy.feature.md](reverse-proxy-caddy.feature.md))
+reverse proxy ([reverse-proxy-caddy.feature.md](../docs/features/caddy.md))
 instead of the Apache role imported with rps-mail. Remove the `apache`
 role; one web server for the collection, not two.
 
 ## Scope
 
 - **Remove `roles/apache`.** Nothing in the collection should depend on
-  it once the consumers below are moved.
+  it once the consumers below are moved. The `caddy`, `authelia` and
+  `oauth2_proxy` roles are Caddy-only already — Apache has no
+  `forward_auth`, and Authelia does not support it as a proxy — so
+  until this lands a mail host is the one place two web servers meet.
+- **postfix's `certbot --apache`** moves to Caddy's ACME (or the
+  certificate role); it and `roles/sympa/meta` are the last two
+  hard references to the apache role.
 - Move the three web consumers to Caddy following the
-  [web-service socket pattern](reverse-proxy.pattern.md)
+  [web-service socket pattern](../docs/patterns/reverse-proxy.md)
   (`/run/https/<vhost>/http.sock`):
   - **postfixadmin** — PHP, via php-fpm behind Caddy.
   - **rainloop** — PHP, via php-fpm behind Caddy.

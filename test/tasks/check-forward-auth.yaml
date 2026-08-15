@@ -46,14 +46,14 @@
     - /run/oauth2-proxy/default.sock
 
 - name: Ask Authelia for its OIDC discovery document
-  ansible.builtin.command: >-
+  ansible.builtin.command: >-  # noqa: command-instead-of-module
     curl -sf --resolve auth.{{ domain }}:443:127.0.0.1 -k
     https://auth.{{ domain }}/.well-known/openid-configuration
   register: discovery
   changed_when: false
 
 - name: Ask the gates about an anonymous request
-  ansible.builtin.command: >-
+  ansible.builtin.command: >-  # noqa: command-instead-of-module
     curl -s -o /dev/null -w '%{http_code} %{redirect_url}'
     --resolve {{ item }}.{{ domain }}:443:127.0.0.1 -k https://{{ item }}.{{ domain }}/
   register: verdicts
