@@ -39,7 +39,7 @@ Where a scheme needs no separate gate process — basic auth, client certificate
 This is the whole of what a service role may assume.
 
 - **Verdict.** 200 means allow. Any other status is the gate's answer to the client — a 401, or a redirect into a login flow — and the rpx surfaces it rather than proxying.
-- **Identity headers.** On allow, the request reaching the app carries `X-Auth-Request-User`, `X-Auth-Request-Email` and `X-Auth-Request-Preferred-Username`. `X-Auth-Request-User` is the stable local identifier, and the one the per-user routers in [ttyd](ttyd.feature.md) and [code-server](code-server.feature.md) key on.
+- **Identity headers.** On allow, the request reaching the app carries `X-Auth-Request-User`, `X-Auth-Request-Email` and `X-Auth-Request-Preferred-Username`. `X-Auth-Request-User` is the stable local identifier, and the one the per-user routers in [ttyd](ttyd.feature.md) and [code-server](code-server.feature.md) key on. The spelling is oauth2-proxy's; a gate that answers in another one — Authelia emits `Remote-User`, `Remote-Email`, `Remote-Name` — is renamed to it in the rpx snippet (Caddy: `copy_headers Remote-User>X-Auth-Request-User`), so the contract holds at the app regardless of the gate.
 - **Identity only.** Group and role lists never flow through as headers. A scheme may *gate* on them, but what reaches the app is who the user is, not what they may do.
 - **Trust.** App sockets are unbound from the network ([reverse-proxy.pattern.md](reverse-proxy.pattern.md)), so within the trust boundary below the rpx chain is the only producer of `X-Auth-Request-*`. Spoofing is structurally impossible rather than filtered against, and apps may trust the headers as they arrive. This bullet is the one that fails first if the boundary is stretched, which is why the boundary is part of the contract and not advice.
 - **Endpoint.** The rpx addresses the gate by URL, so a gate that is its own process may be local or on a neighbouring machine — but only within one trust boundary, as below. A local one publishes on a unix socket like any other service in the collection, which is the default.
@@ -50,8 +50,8 @@ A service role that speaks this contract works under every scheme below, and gai
 
 The two defaults answer the two different questions from the design note above.
 
-- **[Authelia](authelia.feature.md)** — a local gate carrying its own user store, passkeys with a password fallback, no provider behind it. The default for a host that stands alone.
-- **[oauth2-proxy](oauth2-proxy.feature.md)** — a local gate in front of a shared OIDC provider, one login across the zone. The default once several hosts want that login to be the same one.
+- **[Authelia](authelia.feature.md)** — a local gate carrying its own user store, passkeys with a password fallback. The default for a host that stands alone: the rpx calls Authelia's authz endpoint directly.
+- **[oauth2-proxy](oauth2-proxy.feature.md)** — a local gate in front of an OIDC provider, one login across the zone. The default once several hosts want that login to be the same one; the provider is the zone's one Authelia, which is a provider as well as a gate.
 
 Cheaper alternates, where a gate process is more than the service warrants:
 
