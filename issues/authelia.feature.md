@@ -61,8 +61,20 @@ An auth server is the worst place in a stack to own bespoke code.
 The [oauth2-proxy](oauth2-proxy.feature.md) scheme needs a provider behind it, which the collection does not have and would otherwise deploy separately — Keycloak or Authentik, each a heavier thing than the gate it feeds.
 Authelia is gate and identity source in one binary, so the no-provider host needs one role instead of two.
 
-It also does not close the door it appears to.
-If several hosts later want a single login, the same binary can be the shared OIDC provider with per-host gates in front of it — exactly the shape [forward-auth.pattern.md](forward-auth.pattern.md) recommends for that case — so growing into the distributed shape means adding a provider, not replacing the gates.
+### It cannot sign in against anything upstream
+
+Authelia reads users from a file or from LDAP, and nothing else — one backend at a time.
+It implements the OpenID Connect **provider** role, and explicitly not the **relying party** role, so it cannot itself authenticate against Google, Keycloak, or another Authelia.
+Upstream states no intention to add it, so this is a deliberate position rather than a gap that may close.
+
+The consequence for growth needs stating exactly, because the comfortable reading is wrong: adding a shared provider later does **not** leave these gates where they are, since a per-host Authelia cannot consume one.
+Three honest paths, in the order they are likely to be wanted:
+
+- **One Authelia as the shared provider, [oauth2-proxy](oauth2-proxy.feature.md) as the per-host gate.** Authelia moves from the edge to the middle and keeps its user store, passkeys and enrolment flow; each host's gate is swapped for one that does speak the relying-party role. This is the path for hosts that are not in a cluster — orb and rod are two machines on the public internet — and the cross-network hop lands at login time, where [forward-auth.pattern.md](forward-auth.pattern.md) says it belongs. It costs a gate swap, not a re-think.
+- **Shared LDAP behind per-host Authelia.** The gates stay and the directory is shared, but sessions and WebAuthn enrolments are not: each instance keeps its own storage and its own relying-party ID, so a passkey is still enrolled once per host. This shares accounts, not logins.
+- **A clustered Authelia** over shared storage, a session backend and one cookie domain. Genuinely one login, and available only inside the tightly integrated cluster the pattern already carves out.
+
+So the file backend is a single-host decision, taken knowing that a second host either repeats it or triggers one of those three moves.
 
 ## Open questions
 
