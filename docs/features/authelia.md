@@ -30,7 +30,7 @@ Authelia is always both things at once. Its `/api/authz/forward-auth` endpoint a
 
 **Notifier.** `filesystem` by default: enrolment links land in `/var/lib/authelia/notification.txt` for root to read. `smtp` through the host's postfix is a switch.
 
-**OIDC provider.** Enabled when `authelia_oidc_clients` is non-empty. Each client carries `client_id`, a plaintext `client_secret` (hashed at render time by the role's `authelia_pbkdf2_digest` filter with a per-client deterministic salt, so the config is idempotent and holds only the digest) or a ready `client_secret_digest`, `redirect_uris`, and defaults of `two_factor`, `consent_mode: implicit`, `client_secret_basic`, scopes `openid profile email groups`.
+**OIDC provider.** Enabled when `authelia_oidc_clients` is non-empty. Each client carries `client_id`, a plaintext `client_secret` (hashed at render time with sha512-crypt and a per-client deterministic salt, so the config is idempotent and holds only the digest) or a ready `client_secret_digest`, `redirect_uris`, and defaults of `two_factor`, `consent_mode: implicit`, `client_secret_basic`, scopes `openid profile email groups`.
 
 **Configuration** is `configuration.yml` plus a `conf.d/` directory Authelia merges, where `authelia_extra_config` goes; both are validated with `authelia config validate` before the service is touched.
 
