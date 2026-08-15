@@ -41,8 +41,8 @@ This is the whole of what a service role may assume.
 - **Verdict.** 200 means allow. Any other status is the gate's answer to the client — a 401, or a redirect into a login flow — and the rpx surfaces it rather than proxying.
 - **Identity headers.** On allow, the request reaching the app carries `X-Auth-Request-User`, `X-Auth-Request-Email` and `X-Auth-Request-Preferred-Username`. `X-Auth-Request-User` is the stable local identifier, and the one the per-user routers in [ttyd](ttyd.feature.md) and [code-server](code-server.feature.md) key on.
 - **Identity only.** Group and role lists never flow through as headers. A scheme may *gate* on them, but what reaches the app is who the user is, not what they may do.
-- **Trust.** App sockets are unbound from the network ([reverse-proxy.pattern.md](reverse-proxy.pattern.md)), so the rpx chain is the only producer of `X-Auth-Request-*`. Spoofing is structurally impossible rather than filtered against, and apps may trust the headers as they arrive.
-- **Endpoint.** The rpx addresses the gate by URL, so a gate that is its own process may be local or on another machine. A local one publishes on a unix socket like any other service in the collection, which is the default; see the cost note below before pointing one across the network.
+- **Trust.** App sockets are unbound from the network ([reverse-proxy.pattern.md](reverse-proxy.pattern.md)), so within the trust boundary below the rpx chain is the only producer of `X-Auth-Request-*`. Spoofing is structurally impossible rather than filtered against, and apps may trust the headers as they arrive. This bullet is the one that fails first if the boundary is stretched, which is why the boundary is part of the contract and not advice.
+- **Endpoint.** The rpx addresses the gate by URL, so a gate that is its own process may be local or on a neighbouring machine — but only within one trust boundary, as below. A local one publishes on a unix socket like any other service in the collection, which is the default.
 
 A service role that speaks this contract works under every scheme below, and gains nothing from knowing which one is deployed.
 
@@ -67,22 +67,37 @@ The valuable, stable thing here is not any one gate — it is that [ttyd](ttyd.f
 Fixing the contract first means the cheap scheme and the full SSO scheme are the same shape to everything downstream, and swapping them is a reverse-proxy edit rather than a service-role change.
 It also keeps the collection honest about the gap between "authenticated" and "authorized": the gate answers the first, the app is still responsible for the second.
 
-### Where the gate runs, and what it costs
+### Where the gate may run
 
-The sub-request carries the original request's headers and no body, so the bandwidth is trivial.
-What it costs is one round trip plus the gate's own session check, on every gated request.
+**The gate and the reverse proxy have to share a trust boundary** — the same host, or the same tightly integrated cluster: one administrative domain, a private network, latency of the same order as a local call.
+Inside that, whether the endpoint is a unix socket or a URL on a neighbouring machine is an implementation detail.
+Across the open internet it is not a detail, and the pattern does not stretch that far.
 
-Over a unix socket on the same host that is a sub-millisecond hop, and not worth thinking about.
-Pointed at another machine it becomes a real network round trip per request — a few milliseconds inside a datacentre, tens of them across the internet — paid again on every asset a page pulls.
-That is the version worth being careful about, and the reason a local gate is the default here.
-What buys the remote one its keep is a single login covering several hosts, which per-host gates cannot give without a shared session store; it is a fair trade, but it should be made knowingly rather than by following the pattern blindly.
+Three reasons, in descending order of how much they should worry a deployer:
 
-Two things soften the cost where this collection actually spends it.
+- **The trust assumption breaks.** The contract lets an app believe `X-Auth-Request-*` because the rpx chain is the only thing that can produce those headers, which holds precisely while the chain is local and the sockets are off the network. Move the gate across an untrusted one and a forged 200 with forged identity headers is a forged login. The sub-request then needs mutual TLS and a trust store of its own — the problem has not been removed, it has been moved and given a certificate lifecycle.
+- **Every gated service inherits a remote single point of failure.** A gate that is unreachable takes down every gated vhost on every host pointed at it. On one host that is one failure domain; across a WAN it couples machines that were otherwise independent.
+- **Every request pays the round trip.** The sub-request carries the original headers and no body, so bandwidth is trivial; the cost is one round trip plus the gate's session check, per gated request. Sub-millisecond over a local socket, a few milliseconds inside a datacentre, tens of them across the internet — and paid again on every asset a page pulls.
+
+Two things soften that last one where this collection actually spends it.
 [ttyd](ttyd.feature.md) and [code-server](code-server.feature.md) are websocket applications: the gate is consulted once at the upgrade, and the long-lived connection that follows carries the session without further checks, so the per-request cost lands on the initial page load rather than on use.
-An rpx that can cache the auth response against the session cookie for a short TTL (nginx's `proxy_cache` over `auth_request`) collapses the repeat cost for the assets too.
+An rpx that can cache the verdict against the session cookie for a short TTL (nginx's `proxy_cache` over `auth_request`) collapses the repeat cost for the assets too.
 
-The websocket exemption has a security edge worth stating: a session revoked at the gate does not reach a connection that is already open, so revocation takes effect when the socket drops rather than immediately.
+The websocket exemption has a security edge worth stating: a session revoked at the gate does not reach a connection that is already open, so revocation takes effect when the socket drops rather than at once.
 For a terminal or an editor that is usually acceptable; a service where it is not should not be gated this way.
+
+### Reaching across hosts anyway
+
+What tempts a deployer toward a remote gate is one login covering several machines.
+Forward auth is the wrong instrument for it: it puts a cross-network hop on *every request* in order to buy a login that happens *once*.
+
+The shape that gets the same result is a **local gate on each host, pointed at a shared identity provider** — the [oauth2-proxy](oauth2-proxy.feature.md) scheme.
+The cross-network exchange happens during the login redirect and then stops; afterwards every check is local, against a cookie the local gate validates by itself.
+The remote dependency is reduced to login time, where an outage means "cannot sign in" rather than "everything is down", and where one round trip is invisible.
+
+So the two schemes are not competing implementations of the same thing.
+A local gate with its own user store is the answer for a host that stands alone; a local gate in front of a shared provider is the answer for several hosts that want one login.
+Neither of them is a gate on the far side of the internet.
 
 ### Why not in-line chaining
 
