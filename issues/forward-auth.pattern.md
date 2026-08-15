@@ -48,9 +48,12 @@ A service role that speaks this contract works under every scheme below, and gai
 
 ## Schemes
 
-Default where an identity provider exists: **[oauth2-proxy](oauth2-proxy.feature.md)** — OIDC, cookie sessions, single sign-on across the zone.
+The two defaults answer the two different questions from the design note above.
 
-Alternates, for a host with no IdP:
+- **[Authelia](authelia.feature.md)** — a local gate carrying its own user store, passkeys with a password fallback, no provider behind it. The default for a host that stands alone.
+- **[oauth2-proxy](oauth2-proxy.feature.md)** — a local gate in front of a shared OIDC provider, one login across the zone. The default once several hosts want that login to be the same one.
+
+Cheaper alternates, where a gate process is more than the service warrants:
 
 - **Basic auth at the rpx.** The rpx checks an htpasswd file and injects the matched username as `X-Auth-Request-User`. No gate process, no provider, no session; the browser re-sends credentials on every request. One shared secret per user, so revocation means editing a file.
 - **Client certificates (mTLS).** The rpx requires a client certificate and maps its CN or SAN onto the identity headers. No passwords and no provider, at the cost of issuing and distributing certificates.
@@ -114,6 +117,6 @@ One shape, spelled out once, is worth more than two shapes with one of them unus
 ## Open questions
 
 - **Is "forward auth" the right name?** It describes the mechanism, but two of the three schemes have no separate gate to forward to — the rpx answers its own sub-question. A contract-shaped name (`auth-gate`, `authenticated-identity`) would cover all three honestly. Recommendation: keep `forward-auth`, since it matches the Caddy directive and the rpx-native schemes are legitimately the degenerate case of the same shape.
-- **Which alternate scheme gets a feature ticket first?** Basic auth is the smallest thing that unblocks a devbox with no IdP; mTLS is stronger and barely harder for a single user. Only one needs writing now.
+- **Do the cheap alternates need tickets at all?** [Authelia](authelia.feature.md) now covers the no-provider case properly, which was the gap basic auth and mTLS were being considered for. They may be worth writing up as documented rpx snippets rather than roles — or worth dropping to keep the scheme list short.
 - **Do the alternates keep the `X-Auth-Request-*` spelling?** It is oauth2-proxy's, not a standard. Recommendation: yes — it is what the service roles already read, and inventing a neutral spelling would mean a translation shim in the default scheme for no gain.
 - **Does the basic-auth scheme need a session at all?** Browsers cache basic credentials for the realm, so probably not; worth confirming against a websocket-heavy client like code-server before it is written up.
