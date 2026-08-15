@@ -1,5 +1,4 @@
 {% set settings = {
-  "worktree": {"bgIsolation": "worktree"},
   "hooks": {
     "WorktreeCreate": [
       {"hooks": [{"type": "command", "command": claude_code_hooks_dir ~ "/worktree-create"}]}
@@ -15,6 +14,9 @@
     {"hooks": [{"type": "command", "command": claude_code_hooks_dir ~ "/require-clean"}]}
   ]
 }) %}
+{% endif %}
+{% if claude_code_bg_isolation %}
+{% set _ = settings.update({"worktree": {"bgIsolation": claude_code_bg_isolation}}) %}
 {% endif %}
 {% if claude_code_with_trust_work_dirs %}
 {% set _ = settings.hooks.update({

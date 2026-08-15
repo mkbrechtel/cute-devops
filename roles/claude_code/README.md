@@ -58,6 +58,10 @@ Defaults (see `defaults/main.yml`):
 - `claude_code_hooks_dir: /etc/claude/hooks`
 - `claude_code_managed_settings_dropin: /etc/claude-code/managed-settings.d/50-cute-devops.json`
 - `claude_code_with_require_clean: true`
+- `claude_code_bg_isolation: none` — managed `worktree.bgIsolation` policy:
+  `none` pins background-session worktree isolation off machine-wide,
+  `worktree` enforces it (the Shared Worktrees setup), `false` omits the key
+  so lower settings scopes decide
 - `claude_code_with_trust_work_dirs: false` — deploy the `SessionStart` trust
   seeding hook
 - `claude_code_trust_work_bases: [/work]` — work bases the trust hook considers
