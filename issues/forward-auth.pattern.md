@@ -42,7 +42,7 @@ This is the whole of what a service role may assume.
 - **Identity headers.** On allow, the request reaching the app carries `X-Auth-Request-User`, `X-Auth-Request-Email` and `X-Auth-Request-Preferred-Username`. `X-Auth-Request-User` is the stable local identifier, and the one the per-user routers in [ttyd](ttyd.feature.md) and [code-server](code-server.feature.md) key on.
 - **Identity only.** Group and role lists never flow through as headers. A scheme may *gate* on them, but what reaches the app is who the user is, not what they may do.
 - **Trust.** App sockets are unbound from the network ([reverse-proxy.pattern.md](reverse-proxy.pattern.md)), so the rpx chain is the only producer of `X-Auth-Request-*`. Spoofing is structurally impossible rather than filtered against, and apps may trust the headers as they arrive.
-- **Socket.** A gate that is its own process publishes on a unix socket like any other service in the collection.
+- **Endpoint.** The rpx addresses the gate by URL, so a gate that is its own process may be local or on another machine. A local one publishes on a unix socket like any other service in the collection, which is the default; see the cost note below before pointing one across the network.
 
 A service role that speaks this contract works under every scheme below, and gains nothing from knowing which one is deployed.
 
@@ -66,6 +66,23 @@ For a single-user devbox that is frequently the right answer and costs nothing t
 The valuable, stable thing here is not any one gate — it is that [ttyd](ttyd.feature.md) and [code-server](code-server.feature.md) route per user off a header without caring where the header came from.
 Fixing the contract first means the cheap scheme and the full SSO scheme are the same shape to everything downstream, and swapping them is a reverse-proxy edit rather than a service-role change.
 It also keeps the collection honest about the gap between "authenticated" and "authorized": the gate answers the first, the app is still responsible for the second.
+
+### Where the gate runs, and what it costs
+
+The sub-request carries the original request's headers and no body, so the bandwidth is trivial.
+What it costs is one round trip plus the gate's own session check, on every gated request.
+
+Over a unix socket on the same host that is a sub-millisecond hop, and not worth thinking about.
+Pointed at another machine it becomes a real network round trip per request — a few milliseconds inside a datacentre, tens of them across the internet — paid again on every asset a page pulls.
+That is the version worth being careful about, and the reason a local gate is the default here.
+What buys the remote one its keep is a single login covering several hosts, which per-host gates cannot give without a shared session store; it is a fair trade, but it should be made knowingly rather than by following the pattern blindly.
+
+Two things soften the cost where this collection actually spends it.
+[ttyd](ttyd.feature.md) and [code-server](code-server.feature.md) are websocket applications: the gate is consulted once at the upgrade, and the long-lived connection that follows carries the session without further checks, so the per-request cost lands on the initial page load rather than on use.
+An rpx that can cache the auth response against the session cookie for a short TTL (nginx's `proxy_cache` over `auth_request`) collapses the repeat cost for the assets too.
+
+The websocket exemption has a security edge worth stating: a session revoked at the gate does not reach a connection that is already open, so revocation takes effect when the socket drops rather than immediately.
+For a terminal or an editor that is usually acceptable; a service where it is not should not be gated this way.
 
 ### Why not in-line chaining
 
