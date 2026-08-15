@@ -24,7 +24,7 @@ issues/
 ├── airgapped-escrow.feature.md
 ├── backup-restic.feature.md
 ├── integrate-patterns-library.feature.md
-├── oidc-gating.pattern.md
+├── forward-auth.pattern.md
 ├── reuse-lint-failures.bug.md
 └── …
 ```

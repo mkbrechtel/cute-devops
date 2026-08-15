@@ -211,7 +211,7 @@ Render them on the website at build time when needed.
 
 - The `issues/` directory in this very repo (e.g.
   `issues/integrate-patterns-library.feature.md`,
-  `issues/oidc-gating.pattern.md`,
+  `issues/forward-auth.pattern.md`,
   `issues/reuse-lint-failures.bug.md`) — *eat your own dog food*.
 - Forgejo's web editor + branch-creation flow makes the
   one-click form a thin wrapper around forge primitives.
