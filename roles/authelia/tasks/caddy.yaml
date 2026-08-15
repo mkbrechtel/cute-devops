@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+- name: Write the portal vhost
+  ansible.builtin.template:
+    src: caddy-vhost.j2
+    dest: "{{ authelia_caddy_conf_dir }}/{{ authelia_vhost }}"
+    owner: root
+    group: caddy
+    mode: "0640"
+  notify: reload caddy
+
+- name: Write the forward-auth snippet
+  ansible.builtin.template:
+    src: caddy-snippet.j2
+    dest: "{{ authelia_caddy_conf_dir }}/_snippet.authelia"
+    owner: root
+    group: caddy
+    mode: "0640"
+  notify: reload caddy

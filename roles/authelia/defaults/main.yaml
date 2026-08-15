@@ -1,0 +1,80 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+# Upstream release to install (GitHub tag, with the leading "v").
+authelia_version: v4.39.20
+authelia_github_repo_url: https://github.com/authelia/authelia
+authelia_arch: "{{ authelia_arch_map[ansible_architecture] | default('amd64') }}"
+authelia_install_dir: /opt/authelia
+
+# The zone this Authelia is the gate and identity provider for. The portal
+# is published at auth.<zone>; session cookies and the OIDC issuer are bound
+# to it.
+authelia_zone: "{{ domain }}"
+authelia_vhost: "auth.{{ authelia_zone }}"
+authelia_socket_dir: "/run/https/{{ authelia_vhost }}"
+authelia_socket_group: https-socket-access
+
+authelia_config_dir: /etc/authelia
+authelia_data_dir: /var/lib/authelia
+authelia_secrets_dir: /etc/secrets/authelia
+
+# Users. By default rendered from the collection's `users` dict (name,
+# password crypt hash, unix groups, optional `email` and `displayname`);
+# authelia_users is merged on top and wins.
+authelia_users_from_users: true
+authelia_users: {}
+authelia_default_email_domain: "{{ authelia_zone }}"
+
+# Access control. Every domain in the zone gets authelia_default_policy;
+# authelia_access_rules go in front of that catch-all.
+authelia_default_policy: two_factor
+authelia_access_rules: []
+
+# Sessions
+authelia_session_expiration: 1 hour
+authelia_session_inactivity: 5 minutes
+authelia_session_remember_me: 1 month
+
+# Passkeys
+authelia_webauthn_display_name: "{{ authelia_zone }}"
+authelia_webauthn_enable_passkey_login: true
+
+# Notifier: filesystem (link written to authelia_notification_file for the
+# admin to read) or smtp.
+authelia_notifier: filesystem
+authelia_notification_file: "{{ authelia_data_dir }}/notification.txt"
+authelia_smtp_address: smtp://127.0.0.1:25
+authelia_smtp_sender: "Authelia <noreply@{{ authelia_zone }}>"
+authelia_smtp_username: ""
+authelia_smtp_password: ""
+authelia_smtp_disable_require_tls: false
+
+# OIDC clients (relying parties), one per oauth2-proxy instance:
+#   - client_id: oauth2-proxy
+#     client_name: oauth2-proxy on host           # optional
+#     client_secret: <plaintext, e.g. from vault>  # hashed at render time
+#     redirect_uris:
+#       - https://terminal.example.com/oauth2/callback
+#     scopes: [openid, profile, email, groups]     # default
+#     authorization_policy: two_factor             # default
+#     consent_mode: implicit                       # default
+# The provider is only enabled when the list is non-empty.
+authelia_oidc_clients: []
+authelia_oidc_access_token_lifespan: 1 hour
+authelia_oidc_refresh_token_lifespan: 90 minutes
+
+# Merged recursively over the rendered configuration.
+authelia_extra_config: {}
+
+# Drop the portal vhost into /etc/caddy/conf.d and reload caddy.
+authelia_configure_caddy: true
+authelia_caddy_conf_dir: /etc/caddy/conf.d
+
+# systemd sandboxing on the unit. Off only where the kernel features are
+# unavailable, e.g. rootless test containers.
+authelia_systemd_hardening: true

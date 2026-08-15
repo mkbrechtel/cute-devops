@@ -1,0 +1,16 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+- name: Install oauth2-proxy
+  ansible.builtin.import_tasks: install.yaml
+
+- name: Configure instances
+  ansible.builtin.include_tasks: instance.yaml
+  loop: "{{ oauth2_proxy_instances | dict2items }}"
+  loop_control:
+    loop_var: instance
+    label: "{{ instance.key }}"

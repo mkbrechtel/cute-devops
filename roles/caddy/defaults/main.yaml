@@ -1,0 +1,39 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+# ACME account email. Empty leaves Caddy's default (no email).
+caddy_acme_email: ""
+
+# DNS provider modules to build into Caddy, e.g. ["github.com/caddy-dns/rfc2136"].
+# Non-empty switches from the Debian package to the upstream binary from
+# caddyserver.com/api/download so DNS-01 / wildcard certificates work.
+caddy_dns_modules: []
+caddy_upstream_arch: "{{ caddy_upstream_arch_map[ansible_architecture] | default('amd64') }}"
+caddy_upstream_binary: /usr/local/bin/caddy
+# Re-download the upstream binary even if it exists (module list changed, upgrade).
+caddy_upstream_refresh: false
+
+# Verbatim lines appended to the Caddyfile global block, e.g. an `acme_dns`
+# block. Credentials go through caddy_environment, not into this string.
+caddy_global_extra: ""
+
+# Issue certificates from Caddy's internal CA instead of ACME. For test
+# containers and hosts that are not publicly reachable.
+caddy_local_certs: false
+
+# Environment for the caddy service — DNS provider tokens, TSIG keys.
+caddy_environment: {}
+caddy_environment_files: []
+
+# Access log format: json or console.
+caddy_log_format: json
+
+# Where service roles drop their vhost fragments (filename = vhost FQDN).
+caddy_conf_dir: /etc/caddy/conf.d
+
+# Group that grants read/connect on /run/https/<vhost>/http.sock.
+caddy_socket_group: https-socket-access

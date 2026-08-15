@@ -1,0 +1,44 @@
+{#
+SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+
+SPDX-License-Identifier: EUPL-1.2
+#}
+# This file is managed by the osahris.cute_devops.oauth2_proxy Ansible role!
+# MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
+
+[Unit]
+Description=oauth2-proxy instance %i
+Documentation=https://oauth2-proxy.github.io/oauth2-proxy/
+After=network.target
+
+[Service]
+User=oauth2-proxy
+Group=oauth2-proxy
+UMask=0117
+ExecStartPre=+/usr/bin/install -d -o oauth2-proxy -g {{ oauth2_proxy_socket_group }} -m 2750 {{ oauth2_proxy_run_dir }}
+ExecStartPre=+/bin/chmod 2750 {{ oauth2_proxy_run_dir }}
+ExecStartPre=+/bin/chgrp {{ oauth2_proxy_socket_group }} {{ oauth2_proxy_run_dir }}
+ExecStartPre=-/usr/bin/rm -f {{ oauth2_proxy_run_dir }}/%i.sock
+ExecStart=/usr/local/bin/oauth2-proxy --config {{ oauth2_proxy_config_dir }}/%i.toml
+Restart=on-failure
+RestartSec=5
+SyslogIdentifier=oauth2-proxy-%i
+
+{% if oauth2_proxy_systemd_hardening %}
+CapabilityBoundingSet=
+NoNewPrivileges=yes
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths={{ oauth2_proxy_run_dir }}
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectControlGroups=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+
+{% endif %}
+[Install]
+WantedBy=multi-user.target

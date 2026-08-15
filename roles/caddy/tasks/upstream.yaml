@@ -1,0 +1,30 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+# The download API serves upstream's CI build with the requested modules
+# compiled in. It publishes no checksum, so the binary is fetched once and
+# only refreshed on request.
+- name: Download the upstream caddy binary
+  ansible.builtin.get_url:
+    url: "{{ caddy_upstream_download_url }}"
+    dest: "{{ caddy_upstream_binary }}"
+    owner: root
+    group: root
+    mode: "0755"
+    force: "{{ caddy_upstream_refresh }}"
+  notify: restart caddy
+
+- name: Check the downloaded binary carries the requested modules
+  ansible.builtin.command: "{{ caddy_upstream_binary }} list-modules"
+  register: caddy_modules
+  changed_when: false
+
+- name: Fail when a requested module is missing
+  ansible.builtin.assert:
+    that: "'dns.providers.' ~ (item | basename) in caddy_modules.stdout"
+    fail_msg: "{{ item }} is not compiled into {{ caddy_upstream_binary }}"
+  loop: "{{ caddy_dns_modules }}"

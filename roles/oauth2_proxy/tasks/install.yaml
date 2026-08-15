@@ -1,0 +1,77 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+- name: Install openssl
+  ansible.builtin.apt:
+    name: openssl
+    state: present
+
+- name: Create the oauth2-proxy system user
+  ansible.builtin.user:
+    name: oauth2-proxy
+    system: true
+    home: "{{ oauth2_proxy_config_dir }}"
+    create_home: false
+    shell: /usr/sbin/nologin
+
+- name: Create the socket access group
+  ansible.builtin.group:
+    name: "{{ oauth2_proxy_socket_group }}"
+    system: true
+
+- name: Create directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "{{ oauth2_proxy_release_dir }}", owner: root, group: root, mode: "0755" }
+    - { path: "{{ oauth2_proxy_config_dir }}", owner: root, group: oauth2-proxy, mode: "0750" }
+    - { path: "{{ oauth2_proxy_secrets_dir }}", owner: root, group: oauth2-proxy, mode: "0750" }
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: Read the pinned checksum
+  ansible.builtin.set_fact:
+    oauth2_proxy_expected_checksum: >-
+      {{ lookup('file', 'releases/download/' ~ oauth2_proxy_version ~ '/checksums.sha256').splitlines()
+         | select('search', oauth2_proxy_tarball ~ '$')
+         | first | split() | first }}
+
+- name: Download the release tarball
+  ansible.builtin.get_url:
+    url: "{{ oauth2_proxy_download_url }}"
+    dest: "{{ oauth2_proxy_release_dir }}/{{ oauth2_proxy_tarball }}"
+    checksum: "sha256:{{ oauth2_proxy_expected_checksum }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Unpack the binary
+  ansible.builtin.unarchive:
+    src: "{{ oauth2_proxy_release_dir }}/{{ oauth2_proxy_tarball }}"
+    dest: "{{ oauth2_proxy_release_dir }}"
+    remote_src: true
+    creates: "{{ oauth2_proxy_binary }}"
+    owner: root
+    group: root
+
+- name: Link the current release
+  ansible.builtin.file:
+    src: "{{ oauth2_proxy_binary }}"
+    dest: /usr/local/bin/oauth2-proxy
+    state: link
+  notify: restart oauth2-proxy
+
+- name: Write the systemd template unit
+  ansible.builtin.template:
+    src: oauth2-proxy@.service.j2
+    dest: /etc/systemd/system/oauth2-proxy@.service
+    mode: "0644"
+  notify: restart oauth2-proxy

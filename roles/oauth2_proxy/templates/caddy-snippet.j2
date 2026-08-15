@@ -1,0 +1,31 @@
+{#
+SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+
+SPDX-License-Identifier: EUPL-1.2
+#}
+# This file is managed by the osahris.cute_devops.oauth2_proxy Ansible role!
+# MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
+#
+# Gate a vhost with `import oauth2-proxy-{{ instance.key }}` at the top of
+# its block. /oauth2/* is served by oauth2-proxy (sign-in, callback,
+# sign-out); every other request is checked and, on allow, carries
+# X-Auth-Request-User / -Email / -Preferred-Username.
+
+(oauth2-proxy-{{ instance.key }}) {
+	handle /oauth2/* {
+		reverse_proxy unix/{{ oauth2_proxy_run_dir }}/{{ instance.key }}.sock {
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-Uri {uri}
+		}
+	}
+	@gated not path /oauth2/*
+	forward_auth @gated unix/{{ oauth2_proxy_run_dir }}/{{ instance.key }}.sock {
+		uri /oauth2/auth
+		copy_headers X-Auth-Request-User X-Auth-Request-Email X-Auth-Request-Preferred-Username
+		@denied status 401
+		handle_response @denied {
+			redir * /oauth2/sign_in?rd={scheme}://{host}{uri} 302
+		}
+	}
+}

@@ -1,0 +1,19 @@
+{#
+SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+
+SPDX-License-Identifier: EUPL-1.2
+#}
+# This file is managed by the osahris.cute_devops.authelia Ansible role!
+# MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
+#
+# Gate a vhost with `import authelia` at the top of its block. On allow the
+# request carries X-Auth-Request-User / -Email / -Preferred-Username; on
+# deny the browser is redirected to the portal.
+
+(authelia) {
+	forward_auth unix/{{ authelia_socket_dir }}/http.sock {
+		uri /api/authz/forward-auth
+		copy_headers Remote-User>X-Auth-Request-User Remote-User>X-Auth-Request-Preferred-Username Remote-Email>X-Auth-Request-Email
+	}
+}

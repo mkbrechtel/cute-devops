@@ -1,0 +1,46 @@
+{#
+SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+
+SPDX-License-Identifier: EUPL-1.2
+#}
+# This file is managed by the osahris.cute_devops.oauth2_proxy Ansible role!
+# MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
+{% set i = instance.value %}
+
+http_address = "unix://{{ oauth2_proxy_run_dir }}/{{ instance.key }}.sock"
+reverse_proxy = true
+upstreams = ["static://202"]
+
+provider = "oidc"
+provider_display_name = "{{ i.provider_display_name | default(oauth2_proxy_zone) }}"
+oidc_issuer_url = "{{ i.issuer_url | default(oauth2_proxy_issuer_url) }}"
+client_id = "{{ i.client_id }}"
+client_secret = "{{ i.client_secret }}"
+scope = "openid profile email groups"
+oidc_groups_claim = "groups"
+code_challenge_method = "S256"
+skip_provider_button = true
+insecure_oidc_allow_unverified_email = {{ oauth2_proxy_allow_unverified_email | bool | to_json }}
+
+email_domains = {{ i.email_domains | default(['*']) | to_json }}
+allowed_groups = {{ i.allowed_groups | default([]) | to_json }}
+
+session_store_type = "cookie"
+cookie_secret = "{{ cookie_secret }}"
+cookie_secure = true
+cookie_httponly = true
+cookie_samesite = "lax"
+cookie_expire = "{{ i.cookie_expire | default('168h') }}"
+cookie_refresh = "{{ i.cookie_refresh | default('1h') }}"
+{% if i.cookie_domains | default([]) | length > 0 %}
+cookie_domains = {{ i.cookie_domains | to_json }}
+{% endif %}
+whitelist_domains = {{ i.whitelist_domains | default(['.' ~ oauth2_proxy_zone]) | to_json }}
+
+set_xauthrequest = true
+pass_access_token = false
+pass_user_headers = false
+{% for k, v in (i.extra | default({})).items() %}
+{{ k }} = {{ v | to_json }}
+{% endfor %}

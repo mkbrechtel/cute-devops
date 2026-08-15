@@ -1,0 +1,15 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+caddy_upstream_arch_map:
+  x86_64: amd64
+  aarch64: arm64
+  armv7l: arm
+
+caddy_upstream_download_url: >-
+  https://caddyserver.com/api/download?os=linux&arch={{ caddy_upstream_arch }}{%
+  for m in caddy_dns_modules %}&p={{ m | urlencode }}{% endfor %}

@@ -1,0 +1,58 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+# Interim until the secrets role exists: the cookie secret is generated once
+# on the host, at the path the secrets role will own.
+- name: Generate the cookie secret for {{ instance.key }}
+  ansible.builtin.shell: >-
+    set -o pipefail; umask 027;
+    openssl rand -base64 32 | tr -- '+/' '-_' > {{ oauth2_proxy_secrets_dir }}/{{ instance.key }}-cookie-secret.pass
+  args:
+    creates: "{{ oauth2_proxy_secrets_dir }}/{{ instance.key }}-cookie-secret.pass"
+    executable: /bin/bash
+
+- name: Fix cookie secret permissions for {{ instance.key }}
+  ansible.builtin.file:
+    path: "{{ oauth2_proxy_secrets_dir }}/{{ instance.key }}-cookie-secret.pass"
+    owner: root
+    group: oauth2-proxy
+    mode: "0640"
+
+- name: Read the cookie secret for {{ instance.key }}
+  ansible.builtin.slurp:
+    src: "{{ oauth2_proxy_secrets_dir }}/{{ instance.key }}-cookie-secret.pass"
+  register: oauth2_proxy_cookie_secret_file
+  no_log: true
+
+- name: Write the configuration for {{ instance.key }}
+  ansible.builtin.template:
+    src: instance.toml.j2
+    dest: "{{ oauth2_proxy_config_dir }}/{{ instance.key }}.toml"
+    owner: root
+    group: oauth2-proxy
+    mode: "0640"
+  vars:
+    cookie_secret: "{{ oauth2_proxy_cookie_secret_file.content | b64decode | trim }}"
+  no_log: true
+  notify: restart oauth2-proxy
+
+- name: Enable and start oauth2-proxy@{{ instance.key }}
+  ansible.builtin.systemd:
+    name: "oauth2-proxy@{{ instance.key }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Write the caddy snippet for {{ instance.key }}
+  ansible.builtin.template:
+    src: caddy-snippet.j2
+    dest: "{{ oauth2_proxy_caddy_conf_dir }}/_snippet.oauth2-proxy-{{ instance.key }}"
+    owner: root
+    group: caddy
+    mode: "0640"
+  when: oauth2_proxy_configure_caddy
+  notify: reload caddy

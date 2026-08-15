@@ -1,0 +1,86 @@
+{#
+SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+
+SPDX-License-Identifier: EUPL-1.2
+#}
+# This file is managed by the osahris.cute_devops.authelia Ansible role!
+# MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
+#
+# Secrets arrive as AUTHELIA_*_FILE environment variables from
+# {{ authelia_config_dir }}/environment. Local overrides go into conf.d/.
+
+theme: auto
+
+server:
+  address: 'unix://{{ authelia_socket_dir }}/http.sock?umask=0117'
+
+log:
+  level: info
+
+authentication_backend:
+  file:
+    path: {{ authelia_config_dir }}/users_database.yml
+    watch: true
+
+access_control:
+  default_policy: deny
+  rules:
+{% for rule in authelia_access_rules %}
+    - {{ rule | to_json }}
+{% endfor %}
+    - domain: ['{{ authelia_zone }}', '*.{{ authelia_zone }}']
+      policy: {{ authelia_default_policy }}
+
+session:
+  cookies:
+    - domain: {{ authelia_zone }}
+      authelia_url: {{ authelia_issuer_url }}
+      inactivity: {{ authelia_session_inactivity }}
+      expiration: {{ authelia_session_expiration }}
+      remember_me: {{ authelia_session_remember_me }}
+
+storage:
+  local:
+    path: {{ authelia_data_dir }}/db.sqlite3
+
+notifier:
+{% if authelia_notifier == 'smtp' %}
+  smtp:
+    address: {{ authelia_smtp_address }}
+    sender: '{{ authelia_smtp_sender }}'
+{% if authelia_smtp_username %}
+    username: '{{ authelia_smtp_username }}'
+{% endif %}
+    disable_require_tls: {{ authelia_smtp_disable_require_tls | bool | to_json }}
+{% else %}
+  filesystem:
+    filename: {{ authelia_notification_file }}
+{% endif %}
+
+webauthn:
+  display_name: '{{ authelia_webauthn_display_name }}'
+  enable_passkey_login: {{ authelia_webauthn_enable_passkey_login | bool | to_json }}
+{% if authelia_oidc_clients | length > 0 %}
+
+identity_providers:
+  oidc:
+    jwks:
+      - key: {% raw %}{{ secret "{% endraw %}{{ authelia_secrets_dir }}/oidc-issuer.privkey.pem{% raw %}" | mindent 10 "|" | msquote }}{% endraw %}
+
+    lifespans:
+      access_token: {{ authelia_oidc_access_token_lifespan }}
+      refresh_token: {{ authelia_oidc_refresh_token_lifespan }}
+    clients:
+{% for c in authelia_oidc_clients %}
+      - client_id: '{{ c.client_id }}'
+        client_name: '{{ c.client_name | default(c.client_id) }}'
+        client_secret: '{{ c.client_secret_digest | default(c.client_secret | authelia_pbkdf2_digest(c.client_id)) }}'
+        public: false
+        authorization_policy: {{ c.authorization_policy | default('two_factor') }}
+        consent_mode: {{ c.consent_mode | default('implicit') }}
+        token_endpoint_auth_method: client_secret_basic
+        redirect_uris: {{ c.redirect_uris | to_json }}
+        scopes: {{ c.scopes | default(['openid', 'profile', 'email', 'groups']) | to_json }}
+{% endfor %}
+{% endif %}

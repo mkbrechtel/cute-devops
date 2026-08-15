@@ -11,12 +11,14 @@
 #   deploy = setup_deploy + the test_deploy_* probe roles
 #   devbox = ttyd
 #   ns     = knot_nameserver
+#   auth   = caddy + authelia + oauth2_proxy (the forward-auth stack)
 # Every instance also gets `common`, which is what the old [vms] group did.
 
 [instances]
 deploy
 devbox
 ns
+auth
 
 [setup_deploy]
 deploy
@@ -26,6 +28,9 @@ devbox
 
 [knot_nameservers]
 ns
+
+[auth_gates]
+auth
 
 # No instance yet — carried over from test-in-vms, which also defined the
 # vars without a host. Add one here when restic_client gets a test box.

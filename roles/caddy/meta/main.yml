@@ -1,0 +1,22 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+galaxy_info:
+  author: mkbrechtel
+  description: Caddy reverse proxy serving web-service sockets under /run/https
+  company: mkbrechtel
+  license: EUPL-1.2
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Debian
+      versions:
+        - trixie
+  galaxy_tags:
+    - caddy
+    - proxy
+    - web
+
+dependencies: []

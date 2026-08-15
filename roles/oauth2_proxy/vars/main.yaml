@@ -1,0 +1,15 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+oauth2_proxy_arch_map:
+  x86_64: amd64
+  aarch64: arm64
+
+oauth2_proxy_tarball: "oauth2-proxy-{{ oauth2_proxy_version }}.linux-{{ oauth2_proxy_arch }}.tar.gz"
+oauth2_proxy_download_url: "{{ oauth2_proxy_github_repo_url }}/releases/download/{{ oauth2_proxy_version }}/{{ oauth2_proxy_tarball }}"
+oauth2_proxy_release_dir: "{{ oauth2_proxy_install_dir }}/{{ oauth2_proxy_version }}"
+oauth2_proxy_binary: "{{ oauth2_proxy_release_dir }}/oauth2-proxy-{{ oauth2_proxy_version }}.linux-{{ oauth2_proxy_arch }}/oauth2-proxy"

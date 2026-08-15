@@ -1,0 +1,45 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+oauth2_proxy_version: v7.15.3
+oauth2_proxy_github_repo_url: https://github.com/oauth2-proxy/oauth2-proxy
+oauth2_proxy_arch: "{{ oauth2_proxy_arch_map[ansible_architecture] | default('amd64') }}"
+oauth2_proxy_install_dir: /opt/oauth2-proxy
+
+oauth2_proxy_config_dir: /etc/oauth2-proxy
+oauth2_proxy_secrets_dir: /etc/secrets/oauth2-proxy
+oauth2_proxy_run_dir: /run/oauth2-proxy
+oauth2_proxy_socket_group: https-socket-access
+
+# The zone; the default issuer is the zone's Authelia at auth.<zone>.
+oauth2_proxy_zone: "{{ domain }}"
+oauth2_proxy_issuer_url: "https://auth.{{ oauth2_proxy_zone }}"
+
+# Instances, one systemd unit oauth2-proxy@<name> each, listening on
+# {{ oauth2_proxy_run_dir }}/<name>.sock:
+#   default:
+#     client_id: oauth2-proxy
+#     client_secret: "{{ vault_... }}"
+#     issuer_url: https://auth.example.com   # default oauth2_proxy_issuer_url
+#     cookie_domains: []        # host-only cookie; [".example.com"] for one login per zone
+#     email_domains: ["*"]
+#     allowed_groups: []        # OIDC groups required at login
+#     cookie_expire: 168h
+#     cookie_refresh: 1h
+#     extra: {}                 # further oauth2-proxy options, verbatim
+oauth2_proxy_instances: {}
+
+# Set when the provider does not mark emails verified.
+oauth2_proxy_allow_unverified_email: false
+
+# Drop a (oauth2-proxy-<name>) snippet per instance into /etc/caddy/conf.d.
+oauth2_proxy_configure_caddy: true
+oauth2_proxy_caddy_conf_dir: /etc/caddy/conf.d
+
+# systemd sandboxing on the unit. Off only where the kernel features are
+# unavailable, e.g. rootless test containers.
+oauth2_proxy_systemd_hardening: true

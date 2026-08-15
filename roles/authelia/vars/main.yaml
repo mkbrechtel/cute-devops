@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+authelia_arch_map:
+  x86_64: amd64
+  aarch64: arm64
+
+authelia_tarball: "authelia-{{ authelia_version }}-linux-{{ authelia_arch }}.tar.gz"
+authelia_download_url: "{{ authelia_github_repo_url }}/releases/download/{{ authelia_version }}/{{ authelia_tarball }}"
+authelia_release_dir: "{{ authelia_install_dir }}/{{ authelia_version }}"
+authelia_binary: "{{ authelia_release_dir }}/authelia"
+
+authelia_issuer_url: "https://{{ authelia_vhost }}"
+
+# Secrets generated on the host on first run.
+authelia_generated_secrets:
+  - jwt-secret
+  - session-secret
+  - storage-encryption-key
+  - oidc-hmac-secret

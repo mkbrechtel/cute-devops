@@ -1,0 +1,67 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+- name: Write the user database
+  ansible.builtin.template:
+    src: users_database.yml.j2
+    dest: "{{ authelia_config_dir }}/users_database.yml"
+    owner: root
+    group: authelia
+    mode: "0640"
+  no_log: true
+
+- name: Write the configuration
+  ansible.builtin.template:
+    src: configuration.yml.j2
+    dest: "{{ authelia_config_dir }}/configuration.yml"
+    owner: root
+    group: authelia
+    mode: "0640"
+  notify: restart authelia
+
+- name: Write the extra configuration
+  ansible.builtin.copy:
+    content: |
+      # This file is managed by the osahris.cute_devops.authelia Ansible role!
+      # MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
+      {{ authelia_extra_config | to_nice_yaml(indent=2) }}
+    dest: "{{ authelia_config_dir }}/conf.d/50-extra.yml"
+    owner: root
+    group: authelia
+    mode: "0640"
+  notify: restart authelia
+
+- name: Write the environment file
+  ansible.builtin.template:
+    src: environment.j2
+    dest: "{{ authelia_config_dir }}/environment"
+    owner: root
+    group: authelia
+    mode: "0640"
+  notify: restart authelia
+
+- name: Write the systemd unit
+  ansible.builtin.template:
+    src: authelia.service.j2
+    dest: /etc/systemd/system/authelia.service
+    mode: "0644"
+  notify: restart authelia
+
+- name: Validate the configuration
+  ansible.builtin.shell: >-
+    set -a; . {{ authelia_config_dir }}/environment; set +a;
+    exec /usr/local/bin/authelia config validate
+    --config {{ authelia_config_dir }}/configuration.yml
+    --config {{ authelia_config_dir }}/conf.d
+  changed_when: false
+
+- name: Enable and start authelia
+  ansible.builtin.systemd:
+    name: authelia
+    enabled: true
+    state: started
+    daemon_reload: true

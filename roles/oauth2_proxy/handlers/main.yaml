@@ -1,0 +1,20 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+- name: Restart oauth2-proxy instances
+  ansible.builtin.systemd:
+    name: "oauth2-proxy@{{ item }}"
+    state: restarted
+    daemon_reload: true
+  loop: "{{ oauth2_proxy_instances.keys() | list }}"
+  listen: restart oauth2-proxy
+
+- name: Reload caddy
+  ansible.builtin.systemd:
+    name: caddy
+    state: reloaded
+  listen: reload caddy

@@ -1,0 +1,22 @@
+{#
+SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+
+SPDX-License-Identifier: EUPL-1.2
+#}
+# This file is managed by the osahris.cute_devops.authelia Ansible role!
+# MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
+{% set rendered = {} %}
+{% if authelia_users_from_users %}
+{%   for name, u in (users | default({})).items() if u.password is defined %}
+{%     set _ = rendered.update({name: {
+         'displayname': u.displayname | default(name),
+         'password': u.password,
+         'email': u.email | default(name ~ '@' ~ authelia_default_email_domain),
+         'groups': u.groups | default([]),
+         'disabled': u.disabled | default(false),
+       }}) %}
+{%   endfor %}
+{% endif %}
+{% set _ = rendered.update(authelia_users) %}
+{{ {'users': rendered} | to_nice_yaml(indent=2) }}

@@ -1,0 +1,65 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+- name: Install caddy from Debian
+  ansible.builtin.apt:
+    name: caddy
+    state: present
+
+- name: Install the upstream caddy binary with DNS modules
+  ansible.builtin.import_tasks: upstream.yaml
+  when: caddy_dns_modules | length > 0
+
+- name: Create the socket access group
+  ansible.builtin.group:
+    name: "{{ caddy_socket_group }}"
+    system: true
+
+- name: Let caddy read web-service sockets
+  ansible.builtin.user:
+    name: caddy
+    groups: "{{ caddy_socket_group }}"
+    append: true
+  notify: restart caddy
+
+- name: Create the vhost fragment directory
+  ansible.builtin.file:
+    path: "{{ caddy_conf_dir }}"
+    state: directory
+    owner: root
+    group: caddy
+    mode: "0750"
+
+- name: Write the Caddyfile
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: /etc/caddy/Caddyfile
+    owner: root
+    group: caddy
+    mode: "0640"
+    validate: caddy validate --adapter caddyfile --config %s
+  notify: reload caddy
+
+- name: Create the systemd drop-in directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/caddy.service.d
+    state: directory
+    mode: "0755"
+
+- name: Write the systemd drop-in
+  ansible.builtin.template:
+    src: override.conf.j2
+    dest: /etc/systemd/system/caddy.service.d/override.conf
+    mode: "0644"
+  notify: restart caddy
+
+- name: Enable and start caddy
+  ansible.builtin.systemd:
+    name: caddy
+    enabled: true
+    state: started
+    daemon_reload: true

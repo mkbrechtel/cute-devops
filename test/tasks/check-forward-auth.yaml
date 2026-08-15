@@ -1,0 +1,70 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+- name: Apply pending restarts
+  ansible.builtin.meta: flush_handlers
+
+- name: Install curl
+  ansible.builtin.apt:
+    name: curl
+    state: present
+
+# A gated vhost, as a service role would write it. Nothing listens on the
+# app socket; the gate must answer before it matters.
+- name: Write a gated test vhost
+  ansible.builtin.copy:
+    content: |
+      terminal.{{ domain }} {
+          import oauth2-proxy-default
+          reverse_proxy unix//run/https/terminal.{{ domain }}/http.sock
+      }
+      direct.{{ domain }} {
+          import authelia
+          reverse_proxy unix//run/https/direct.{{ domain }}/http.sock
+      }
+    dest: /etc/caddy/conf.d/terminal.{{ domain }}
+    mode: "0640"
+    group: caddy
+  register: gated_vhost
+
+- name: Reload caddy  # noqa: no-handler
+  ansible.builtin.systemd:
+    name: caddy
+    state: reloaded
+  when: gated_vhost.changed
+
+- name: Wait for the sockets
+  ansible.builtin.wait_for:
+    path: "{{ item }}"
+    timeout: 30
+  loop:
+    - /run/https/auth.{{ domain }}/http.sock
+    - /run/oauth2-proxy/default.sock
+
+- name: Ask Authelia for its OIDC discovery document
+  ansible.builtin.command: >-
+    curl -sf --resolve auth.{{ domain }}:443:127.0.0.1 -k
+    https://auth.{{ domain }}/.well-known/openid-configuration
+  register: discovery
+  changed_when: false
+
+- name: Ask the gates about an anonymous request
+  ansible.builtin.command: >-
+    curl -s -o /dev/null -w '%{http_code} %{redirect_url}'
+    --resolve {{ item }}.{{ domain }}:443:127.0.0.1 -k https://{{ item }}.{{ domain }}/
+  register: verdicts
+  changed_when: false
+  loop: [terminal, direct]
+
+- name: The provider is up and both gates redirect to a login
+  ansible.builtin.assert:
+    that:
+      - (discovery.stdout | from_json).issuer == 'https://auth.' ~ domain
+      - "'email_verified' in (discovery.stdout | from_json).claims_supported"
+      - verdicts.results[0].stdout is match('302 https://terminal.' ~ domain ~ '/oauth2/sign_in')
+      - verdicts.results[1].stdout is match('302 https://auth.' ~ domain ~ '/')
+    fail_msg: "{{ verdicts.results | map(attribute='stdout') | list }}"

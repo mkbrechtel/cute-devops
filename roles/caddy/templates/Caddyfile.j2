@@ -1,0 +1,27 @@
+{#
+SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+
+SPDX-License-Identifier: EUPL-1.2
+#}
+# This file is managed by the osahris.cute_devops.caddy Ansible role!
+# MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
+
+{
+	admin unix//run/caddy/admin.sock
+{% if caddy_acme_email %}
+	email {{ caddy_acme_email }}
+{% endif %}
+{% if caddy_local_certs %}
+	local_certs
+{% endif %}
+	log {
+		output stderr
+		format {{ caddy_log_format }}
+	}
+{% if caddy_global_extra %}
+{{ caddy_global_extra | trim | indent('\t', first=True) }}
+{% endif %}
+}
+
+import {{ caddy_conf_dir }}/*

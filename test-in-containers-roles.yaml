@@ -54,3 +54,27 @@
   roles:
     - role: knot_nameserver
       tags: knot
+
+- name: Test the forward-auth stack
+  hosts: auth_gates
+  gather_facts: true
+  pre_tasks:
+    # oauth2-proxy discovers the issuer over https at start; the test zone
+    # has no DNS, so the portal name points back at the container.
+    - name: Resolve the portal locally
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        line: "127.0.0.1 auth.{{ domain }}"
+        mode: "0644"
+      tags: auth
+  roles:
+    - role: caddy
+      tags: auth
+    - role: authelia
+      tags: auth
+    - role: oauth2_proxy
+      tags: auth
+  tasks:
+    - name: Check the stack answers
+      ansible.builtin.import_tasks: test/tasks/check-forward-auth.yaml
+      tags: auth

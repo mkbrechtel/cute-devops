@@ -1,0 +1,37 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+domain: test.example
+
+# Not publicly reachable: certificates from Caddy's internal CA.
+caddy_local_certs: true
+
+users:
+  alice:
+    # "alice", sha512-crypt — a test fixture, not a secret
+    password: "$6$cutedevops$fAki5n1g7eJFebKnFCeBIoDWSowJ0qV7ErvOB8IjUP08E9SxSQ6l01VQ7ipAJEW0cxNIcJDs.uLhPaTugHhip1"
+    email: alice@test.example
+    groups: [admins]
+
+authelia_oidc_clients:
+  - client_id: oauth2-proxy
+    client_secret: test-client-secret-not-for-production
+    redirect_uris:
+      - https://terminal.test.example/oauth2/callback
+
+oauth2_proxy_instances:
+  default:
+    client_id: oauth2-proxy
+    client_secret: test-client-secret-not-for-production
+    # Caddy's internal CA is not trusted by oauth2-proxy; discovery is
+    # exercised by the check tasks through the socket instead.
+    extra:
+      ssl_insecure_skip_verify: true
+
+# Rootless containers have no CAP_SYS_ADMIN for the sandboxing directives.
+authelia_systemd_hardening: false
+oauth2_proxy_systemd_hardening: false

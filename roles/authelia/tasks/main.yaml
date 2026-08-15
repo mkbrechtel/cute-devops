@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+- name: Install authelia
+  ansible.builtin.import_tasks: install.yaml
+
+- name: Provision secrets
+  ansible.builtin.import_tasks: secrets.yaml
+
+- name: Configure authelia
+  ansible.builtin.import_tasks: configure.yaml
+
+- name: Publish the portal vhost
+  ansible.builtin.import_tasks: caddy.yaml
+  when: authelia_configure_caddy

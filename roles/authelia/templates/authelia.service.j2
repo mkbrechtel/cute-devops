@@ -1,0 +1,47 @@
+{#
+SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+
+SPDX-License-Identifier: EUPL-1.2
+#}
+# This file is managed by the osahris.cute_devops.authelia Ansible role!
+# MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
+
+[Unit]
+Description=Authelia authentication and authorization server
+Documentation=https://www.authelia.com
+After=network.target
+
+[Service]
+User=authelia
+Group=authelia
+UMask=027
+EnvironmentFile={{ authelia_config_dir }}/environment
+Environment=AUTHELIA_SERVER_DISABLE_HEALTHCHECK=true
+ExecStartPre=+/usr/bin/install -d -o authelia -g {{ authelia_socket_group }} -m 2750 {{ authelia_socket_dir }}
+ExecStartPre=+/bin/chmod 2750 {{ authelia_socket_dir }}
+ExecStartPre=+/bin/chgrp {{ authelia_socket_group }} {{ authelia_socket_dir }}
+ExecStart=/usr/local/bin/authelia --config {{ authelia_config_dir }}/configuration.yml --config {{ authelia_config_dir }}/conf.d
+Restart=on-failure
+RestartSec=5
+SyslogIdentifier=authelia
+
+{% if authelia_systemd_hardening %}
+CapabilityBoundingSet=
+NoNewPrivileges=yes
+RestrictNamespaces=yes
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths={{ authelia_data_dir }} {{ authelia_socket_dir }}
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectControlGroups=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+{% endif %}
+[Install]
+WantedBy=multi-user.target

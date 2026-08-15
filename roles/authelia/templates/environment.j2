@@ -1,0 +1,19 @@
+{#
+SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+
+SPDX-License-Identifier: EUPL-1.2
+#}
+# This file is managed by the osahris.cute_devops.authelia Ansible role!
+# MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
+
+X_AUTHELIA_CONFIG_FILTERS=template
+AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE={{ authelia_secrets_dir }}/jwt-secret.pass
+AUTHELIA_SESSION_SECRET_FILE={{ authelia_secrets_dir }}/session-secret.pass
+AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE={{ authelia_secrets_dir }}/storage-encryption-key.pass
+{% if authelia_oidc_clients | length > 0 %}
+AUTHELIA_IDENTITY_PROVIDERS_OIDC_HMAC_SECRET_FILE={{ authelia_secrets_dir }}/oidc-hmac-secret.pass
+{% endif %}
+{% if authelia_notifier == 'smtp' and authelia_smtp_password | length > 0 %}
+AUTHELIA_NOTIFIER_SMTP_PASSWORD_FILE={{ authelia_secrets_dir }}/smtp-password.pass
+{% endif %}

@@ -1,0 +1,24 @@
+{#
+SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+
+SPDX-License-Identifier: EUPL-1.2
+#}
+# This file is managed by the osahris.cute_devops.caddy Ansible role!
+# MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
+
+[Service]
+RuntimeDirectory=caddy
+RuntimeDirectoryMode=0700
+{% for key, value in caddy_environment.items() %}
+Environment={{ key }}={{ value }}
+{% endfor %}
+{% for file in caddy_environment_files %}
+EnvironmentFile={{ file }}
+{% endfor %}
+{% if caddy_dns_modules | length > 0 %}
+ExecStart=
+ExecStart={{ caddy_upstream_binary }} run --environ --config /etc/caddy/Caddyfile
+ExecReload=
+ExecReload={{ caddy_upstream_binary }} reload --config /etc/caddy/Caddyfile --force
+{% endif %}
