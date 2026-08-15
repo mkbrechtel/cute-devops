@@ -24,11 +24,15 @@ SPDX-License-Identifier: EUPL-1.2
 	}
 
 	@wws path /wws /wws/*
-	reverse_proxy @wws unix//run/sympa/wwsympa.socket {
-		transport fastcgi {
-			split /wws
+	handle @wws {
+		reverse_proxy unix//run/sympa/wwsympa.socket {
+			transport fastcgi {
+				split /wws
+			}
 		}
 	}
 
-	respond 404
+	handle {
+		respond 404
+	}
 }
