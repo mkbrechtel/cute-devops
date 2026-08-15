@@ -6,16 +6,38 @@
 # SPDX-License-Identifier: Apache-2.0 OR EUPL-1.2
 
 ---
-- name: Install certbot and apache plugin
+- name: Install certbot
   apt:
     pkg:
       - certbot
-      - python3-certbot-apache
     state: present
+
+# Caddy answers HTTP-01 on port 80 from the webroot; see the http vhost
+# fragment below.
+- name: Webroot for the ACME challenge
+  file:
+    path: /var/www/acme
+    state: directory
+    mode: "0755"
+
+- name: Caddy fragment serving the challenge for the mail hostname
+  copy:
+    content: |
+      # This file is managed by the osahris.cute_devops.postfix Ansible role!
+      # MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
+      http://{{ mailserver_domain_name }} {
+          root * /var/www/acme
+          file_server
+      }
+    dest: /etc/caddy/conf.d/{{ mailserver_domain_name }}
+    owner: root
+    group: caddy
+    mode: "0640"
+  notify: reload caddy
 
 - name: Create certificate using certbot
   command: >
-    certbot certonly --apache
+    certbot certonly --webroot -w /var/www/acme
     -d {{ mailserver_domain_name }}
     --agree-tos
     -n

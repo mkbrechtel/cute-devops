@@ -1,0 +1,34 @@
+{#
+SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+
+SPDX-License-Identifier: EUPL-1.2
+#}
+# This file is managed by the osahris.cute_devops.sympa Ansible role!
+# MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
+
+{{ virtual_domain }} {
+	redir / /wws 301
+
+	handle_path /static-sympa/* {
+		root * /usr/share/sympa/static_content
+		file_server
+	}
+	handle_path /css-sympa/* {
+		root * /var/lib/sympa/css
+		file_server
+	}
+	handle_path /pictures-sympa/* {
+		root * /var/lib/sympa/pictures
+		file_server
+	}
+
+	@wws path /wws /wws/*
+	reverse_proxy @wws unix//run/sympa/wwsympa.socket {
+		transport fastcgi {
+			split /wws
+		}
+	}
+
+	respond 404
+}

@@ -37,3 +37,6 @@ caddy_conf_dir: /etc/caddy/conf.d
 
 # Group that grants read/connect on /run/https/<vhost>/http.sock.
 caddy_socket_group: https-socket-access
+
+# Remove apache2 if present: it held :80/:443 before Caddy did.
+caddy_remove_apache: true

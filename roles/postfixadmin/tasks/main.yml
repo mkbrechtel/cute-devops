@@ -68,32 +68,28 @@
 #    url: http://localhost/postfixadmin/setup.php
 #    dest:  /var/www/html/postfixadmin-setup-report.html
 
-- name: apache2 vhost config
-  template:
-    src: apache2-vhost.conf.j2
-    dest: /etc/apache2/sites-available/postfixadmin.conf
-  notify:
-    - apache2 reload
-
-- name: apache2 vhost enable
+- name: web root with the package's public directory at /postfixadmin
   file:
-    src: ../sites-available/postfixadmin.conf
-    dest: /etc/apache2/sites-enabled/postfixadmin.conf
+    path: "{{ postfixadmin_web_root }}"
+    state: directory
+    mode: "0755"
+
+- name: link postfixadmin into the web root
+  file:
+    src: /usr/share/postfixadmin/public
+    dest: "{{ postfixadmin_web_root }}/postfixadmin"
     state: link
-  notify:
-    - apache2 reload
 
-- name: apache2 ssl module enable
-  apache2_module:
-    name: ssl
-    state: present
+- name: caddy vhost
+  template:
+    src: caddy-vhost.j2
+    dest: "{{ postfixadmin_caddy_conf_dir }}/{{ postfixadmin_server_name }}"
+    owner: root
+    group: caddy
+    mode: "0640"
   notify:
-    - apache2 reload
-
-- name: disable postfixadmin apache2 config
-  file:
-    path: /etc/apache2/conf-enabled/postfixadmin.conf
-    state: absent
+    - reload caddy
+  when: postfixadmin_configure_caddy
 
 - name: flush handlers
   meta: flush_handlers

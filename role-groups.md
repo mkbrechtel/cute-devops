@@ -87,6 +87,7 @@ groups:
   - name: Web
     roles:
       - caddy
+      - php_fpm
       - authelia
       - oauth2_proxy
   - name: Tooling

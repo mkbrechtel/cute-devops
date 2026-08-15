@@ -21,11 +21,16 @@
     vtype: password
   no_log: True
 
+# Recommends off: sympa recommends libapache2-mod-fcgid and apache2-suexec,
+# and the web UI is served through Caddy.
 - name: Install sympa debian packages
   apt:
     pkg:
       - sympa
       - perl-doc
+      - libio-socket-ssl-perl
+      - logrotate
+    install_recommends: false
 
 # - name: chown sympa:sympa /etc/aliases.db
 #   command: chown sympa:sympa /etc/aliases.db

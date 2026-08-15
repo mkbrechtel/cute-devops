@@ -31,3 +31,6 @@ dovecot_users:
 postfix_with_postfixadmin: false
 postfix_with_spf_check: false
 postfix_with_spamhaus_check: false
+
+# The test zone has no ACME; Caddy issues from its internal CA.
+caddy_local_certs: true

@@ -1,0 +1,21 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+galaxy_info:
+  author: mkbrechtel
+  description: php-fpm for PHP web apps served through Caddy
+  company: mkbrechtel
+  license: EUPL-1.2
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Debian
+      versions:
+        - trixie
+  galaxy_tags:
+    - php
+    - web
+
+dependencies: []

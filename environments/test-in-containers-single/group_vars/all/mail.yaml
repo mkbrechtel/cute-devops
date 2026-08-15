@@ -56,10 +56,16 @@ test_mail_stack_expected_units:
   - postfix
   - dovecot
   - sympa
+  - wwsympa.socket
+  - caddy
 test_mail_stack_expected_ports:
   - 25
   - 143
   - 993
+  - 443
 test_mail_stack_flow: true
 test_mail_stack_flow_user: test@mail.test
 test_mail_stack_flow_password: testpassword
+
+# The test zone has no ACME; Caddy issues from its internal CA.
+caddy_local_certs: true

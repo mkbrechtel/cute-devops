@@ -1,0 +1,22 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+- name: Install php-fpm
+  ansible.builtin.apt:
+    name: php-fpm
+    state: present
+
+- name: Find the php-fpm unit
+  ansible.builtin.command: sh -c 'ls /usr/lib/systemd/system/php*-fpm.service | head -1'
+  register: php_fpm_unit
+  changed_when: false
+
+- name: Enable and start php-fpm
+  ansible.builtin.systemd:
+    name: "{{ php_fpm_unit.stdout | basename }}"
+    enabled: true
+    state: started

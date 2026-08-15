@@ -44,6 +44,11 @@ sympa_create_list: listmaster
 sympa_web_domain: "{{ sympa_main_domain }}"
 sympa_domains: []
 
+# Web UI: one Caddy vhost per list domain, /wws over the wwsympa FastCGI
+# socket, / redirected to /wws. TLS is Caddy's.
+sympa_configure_caddy: true
+sympa_caddy_conf_dir: /etc/caddy/conf.d
+
 sympa_sync_unix_user: sympa-sync
 sympa_sync_unix_group: sympa-sync
 

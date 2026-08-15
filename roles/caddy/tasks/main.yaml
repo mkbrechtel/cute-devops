@@ -5,6 +5,23 @@
 
 ---
 
+# The collection used to ship an apache role; a host that ran it still has
+# apache2 on :80/:443, where Caddy needs to listen.
+- name: Stop apache2
+  ansible.builtin.systemd:
+    name: apache2
+    state: stopped
+    enabled: false
+  failed_when: false
+  when: caddy_remove_apache
+
+- name: Remove apache2
+  ansible.builtin.apt:
+    name: apache2
+    state: absent
+    purge: true
+  when: caddy_remove_apache
+
 - name: Install caddy from Debian
   ansible.builtin.apt:
     name: caddy

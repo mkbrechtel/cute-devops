@@ -34,3 +34,8 @@
     state: reloaded
   listen:
     - new mailserver_domain_name
+
+- name: reload caddy
+  service:
+    name: caddy
+    state: reloaded

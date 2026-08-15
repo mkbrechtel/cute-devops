@@ -31,11 +31,9 @@
   tags: sympa-mail
   import_tasks: mail.yaml
 
-- name: Configure Apache
+- name: Configure the web interface
   tags: sympa-web
   import_tasks: web.yaml
-  # TODO: add certificate generation
-  # TODO: add apache vhost configuration
 
 - name: testing
   debug:

@@ -1,0 +1,15 @@
+{#
+SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+
+SPDX-License-Identifier: EUPL-1.2
+#}
+# This file is managed by the osahris.cute_devops.postfixadmin Ansible role!
+# MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
+
+{{ postfixadmin_server_name }} {
+	root * {{ postfixadmin_web_root }}
+	redir / /postfixadmin/ 302
+	php_fastcgi unix/{{ postfixadmin_php_fpm_socket }}
+	file_server
+}

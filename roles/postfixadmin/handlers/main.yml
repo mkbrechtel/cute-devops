@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0 OR EUPL-1.2
 
-- name: apache2 reload
+- name: reload caddy
   service:
-    name: apache2
+    name: caddy
     state: reloaded

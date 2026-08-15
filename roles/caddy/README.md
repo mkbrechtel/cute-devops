@@ -26,6 +26,7 @@ The role ships the global block and `import /etc/caddy/conf.d/*`; every vhost is
 - `caddy_log_format` (default: `json`) — access log format, into journald
 - `caddy_conf_dir` (default: `/etc/caddy/conf.d`)
 - `caddy_socket_group` (default: `https-socket-access`) — created by the role; `caddy` is added to it
+- `caddy_remove_apache` (default: `true`) — purge `apache2`, which the collection's retired apache role left on :80/:443
 
 The admin API is bound to `/run/caddy/admin.sock` (0700, `caddy`), never to TCP.
 

@@ -1,0 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+# Debian's php-fpm metapackage; the socket is the versionless alternative.
+php_fpm_socket: /run/php/php-fpm.sock

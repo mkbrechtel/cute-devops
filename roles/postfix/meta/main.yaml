@@ -6,4 +6,4 @@
 
 dependencies:
   - role: mailname
-  - role: apache
+  - role: caddy

@@ -7,9 +7,6 @@
 
 ---
 
-- name: restart apache2
-  command: systemctl restart apache2
-
 - include_role:
     name: certificate
   vars:

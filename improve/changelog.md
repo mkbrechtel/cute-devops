@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   live there now
 - Container test harness: `auth` instance deploying the three roles
   and asserting discovery and gate verdicts through Caddy
+- New `php_fpm` role: Debian's php-fpm for PHP apps behind Caddy
 - `logind` role: configures `systemd-logind` session retention via a drop-in,
   keeping a user's `user@<uid>.service` manager and `/run/user/<uid>` alive
   for `UserStopDelaySec=72h` after their last logout instead of the stock 10
@@ -71,6 +72,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in `$HOME`) gets worktrees under `<clone>/work/<name>`
 
 ### Changed
+- `postfix`, `postfixadmin`, `sympa` roles depend on `caddy`, not
+  `apache`: postfixadmin is served by `php_fastcgi`, sympa's `wwsympa`
+  over its FastCGI socket, postfix's certbot uses a Caddy-served webroot;
+  `postfixadmin_certificate_*` variables removed, sympa installs
+  without recommends (`docs/features/mail-web-caddy.md`)
 - `repos` role: auto-push is no longer a templated per-repo hook — the role
   only writes the per-remote `remote.<name>.autopush` git config (and removes
   hook files templated by earlier versions); the acting hook is the
@@ -126,6 +132,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (unpushed commits don't block removal; they live on the branch). A worktree
   already gone from disk now always reports success, even when the hook runs
   from an unrelated repository's directory
+
+### Removed
+- `apache` role — Caddy is the collection's one web server
 
 ## [0.2.2] - 2026-03-24
 
