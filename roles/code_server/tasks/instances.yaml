@@ -25,6 +25,7 @@
   register: code_server_tmpfiles
 
 - name: Create it now  # noqa: no-handler
+  changed_when: true
   ansible.builtin.command: systemd-tmpfiles --create /etc/tmpfiles.d/code-server.conf
   when: code_server_tmpfiles.changed
 

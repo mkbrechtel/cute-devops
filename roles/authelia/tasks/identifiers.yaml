@@ -1,0 +1,47 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+# The OIDC subject Authelia reports for a user is an opaque identifier, not
+# the username. Pre-create one per user so it exists before the first login,
+# and publish the map so the per-user routers can resolve a subject back to
+# a unix account.
+
+- name: Generate opaque identifiers
+  ansible.builtin.shell: >-
+    set -a; . {{ authelia_config_dir }}/environment; set +a;
+    exec runuser -u authelia -- /usr/local/bin/authelia storage user identifiers generate
+    --config {{ authelia_config_dir }}/configuration.yml
+    --users {{ authelia_users_all | join(',') }}
+  args:
+    executable: /bin/bash
+  register: authelia_identifiers_generated
+  changed_when: "'Total: 0' not in authelia_identifiers_generated.stdout"
+  when: authelia_users_all | length > 0
+
+- name: Export the identifiers
+  ansible.builtin.shell: >-
+    set -a; . {{ authelia_config_dir }}/environment; set +a;
+    exec runuser -u authelia -- /usr/local/bin/authelia storage user identifiers export
+    --config {{ authelia_config_dir }}/configuration.yml
+    --file {{ authelia_identifiers_file }}
+  args:
+    executable: /bin/bash
+  changed_when: false
+
+- name: Read the identifiers
+  ansible.builtin.slurp:
+    src: "{{ authelia_identifiers_file }}"
+  register: authelia_identifiers_export
+
+- name: Publish the username to identifier map
+  ansible.builtin.set_fact:
+    authelia_user_identifiers: >-
+      {{ dict(_ids | map(attribute='username') | zip(_ids | map(attribute='identifier'))) }}
+  vars:
+    _ids: >-
+      {{ (authelia_identifiers_export.content | b64decode | from_yaml).identifiers
+         | selectattr('service', 'eq', 'openid') | list }}

@@ -14,6 +14,10 @@
 - name: Configure authelia
   ansible.builtin.import_tasks: configure.yaml
 
+- name: Opaque identifiers for the per-user routers
+  ansible.builtin.import_tasks: identifiers.yaml
+  when: authelia_export_identifiers
+
 - name: Publish the portal vhost
   ansible.builtin.import_tasks: caddy.yaml
   when: authelia_configure_caddy

@@ -42,7 +42,15 @@ ttyd_enable_linger: true
 ttyd_run_dir: /run/ttyd
 ttyd_socket_group: https-socket-access
 
-# The one vhost; the reverse proxy routes on X-Auth-Request-User.
+# Which identity the gate reports for a user maps to which unix account.
+# Behind oauth2-proxy and an OIDC provider X-Auth-Request-User is the
+# subject — opaque and stable, unlike a username — so the vhost resolves it
+# through this map. Defaults to the local Authelia's identifiers (published
+# by that role) plus each user's own name, which is what a local Authelia
+# gate sends. Set explicitly when the provider runs on another host.
+ttyd_user_ids: "{{ ttyd_user_ids_auto }}"
+
+# The one vhost; the reverse proxy routes each request to its user.
 ttyd_zone: "{{ domain }}"
 ttyd_vhost: "terminal.{{ ttyd_zone }}"
 # Caddy snippet that authenticates the vhost: oauth2-proxy-<instance>, or

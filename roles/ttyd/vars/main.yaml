@@ -15,3 +15,12 @@ ttyd_arch_map:
   s390x: s390x
 
 ttyd_install_path: "{{ ttyd_install_dir }}/ttyd.{{ ttyd_arch }}"
+
+# Identifiers of the local Authelia, for the users that have an instance.
+_ttyd_authelia_ids: >-
+  {{ (authelia_user_identifiers | default({})) | dict2items
+     | selectattr('key', 'in', ttyd_users) | list }}
+ttyd_user_ids_auto: >-
+  {{ dict(ttyd_users | zip(ttyd_users))
+     | combine(dict(_ttyd_authelia_ids | map(attribute='value')
+                    | zip(_ttyd_authelia_ids | map(attribute='key')))) }}

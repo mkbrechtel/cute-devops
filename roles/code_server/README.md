@@ -8,7 +8,7 @@ SPDX-License-Identifier: EUPL-1.2
 
 # code_server
 
-Publishes a VS Code in the browser per user behind one vhost. [code-server](https://github.com/coder/code-server) is installed from the pinned upstream release `.deb` (checksum vendored in `files/`); each user in `code_server_users` gets a `code-server@<user>.service` running as that user, in their home, on `/run/code-server/<user>/http.sock`. The vhost `code.<zone>` imports the [forward-auth](../../docs/patterns/forward-auth.md) snippet and proxies to the socket named by `X-Auth-Request-User` — one vhost, N users, code-server's own auth off.
+Publishes a VS Code in the browser per user behind one vhost. [code-server](https://github.com/coder/code-server) is installed from the pinned upstream release `.deb` (checksum vendored in `files/`); each user in `code_server_users` gets a `code-server@<user>.service` running as that user, in their home, on `/run/code-server/<user>/http.sock`. The vhost `code.<zone>` imports the [forward-auth](../../docs/patterns/forward-auth.md) snippet and proxies to the socket named by the gate’s `X-Auth-Request-Preferred-Username` — one vhost, N users, code-server's own auth off.
 
 Each instance is a real logind session (`PAMName=code-server`, `/etc/pam.d/code-server`), so `XDG_RUNTIME_DIR`, the user manager and rootless podman work as after an ssh login; lingering is enabled for the users so their services survive the editor.
 

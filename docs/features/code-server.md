@@ -22,12 +22,15 @@ The [`code_server`](../../roles/code_server/README.md) role publishes browser VS
 
 **A real login session.** `PAMName=code-server` against `/etc/pam.d/code-server`, so the integrated terminal has `XDG_RUNTIME_DIR` and a user manager; lingering enabled for the users.
 
-**One vhost.** `/etc/caddy/conf.d/code.<zone>` imports the auth snippet (`code_server_caddy_auth_snippet`) and proxies on `X-Auth-Request-User` to `unix//run/code-server/<that user>/http.sock`, 403 otherwise. code-server's own auth is off by default; `code_server_auth: password` opts back in.
+**One vhost.** `/etc/caddy/conf.d/code.<zone>` imports the auth snippet (`code_server_caddy_auth_snippet`) drops any client-supplied `X-Auth-Request-*` and proxies on the gate's `X-Auth-Request-Preferred-Username` to `unix//run/code-server/<that user>/http.sock`, 403 otherwise. code-server's own auth is off by default; `code_server_auth: password` opts back in.
 
 ## Verified
 
 In the container harness (`./test-in-containers-roles.yaml --tags auth`): `code-server@alice` is up on its socket and answers 200, and `code.<domain>` sends an anonymous request to sign in.
 
 ## Considerations
+
+Routing keys on `X-Auth-Request-Preferred-Username`, not `X-Auth-Request-User`: behind oauth2-proxy and an OIDC provider the latter is the subject claim — for Authelia a UUID, which names no account on the host. The username claim is what both gates agree on.
+
 
 Installing the release `.deb` rather than adding coder's apt repository keeps the host's apt sources Debian-only; the price is a vendored checksum per version bump.

@@ -7,15 +7,28 @@ SPDX-License-Identifier: EUPL-1.2
 # This file is managed by the osahris.cute_devops.ttyd Ansible role!
 # MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
 #
-# One vhost, one terminal per authenticated user: the gate supplies
-# X-Auth-Request-User, the request goes to that user's socket.
+# One vhost, one terminal per authenticated user: the gate reports who the
+# request belongs to in X-Auth-Request-User, the map resolves that to a
+# unix account, and the request goes to that account's socket. Client-
+# supplied identity headers are dropped before the gate runs, and the
+# socket path comes from the map rather than from the header, so only
+# accounts named here are reachable.
 
 {{ ttyd_vhost }} {
 	route {
+		request_header -X-Auth-Request-User
+		request_header -X-Auth-Request-Email
+		request_header -X-Auth-Request-Preferred-Username
 		import {{ ttyd_caddy_auth_snippet }}
-		@user header_regexp user X-Auth-Request-User ^[a-z_][a-z0-9_-]{0,31}$
-		handle @user {
-			reverse_proxy unix/{{ ttyd_run_dir }}/{re.user.0}/http.sock
+		map {http.request.header.X-Auth-Request-User} {user} {
+{% for id, user in ttyd_user_ids.items() %}
+			"{{ id }}" "{{ user }}"
+{% endfor %}
+			default ""
+		}
+		@known not vars {user} ""
+		handle @known {
+			reverse_proxy unix/{{ ttyd_run_dir }}/{user}/http.sock
 		}
 		respond "no terminal for this user" 403
 	}
