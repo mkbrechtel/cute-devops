@@ -60,6 +60,23 @@
   changed_when: false
   loop: [terminal, direct, code]
 
+# A full login, so the per-user routers are exercised with the identity
+# headers the gate really sends (the account name is the preferred-username
+# claim; X-Auth-Request-User is Authelia's opaque subject).
+- name: Sign in and follow the flow to the terminal
+  ansible.builtin.shell: |
+    set -e
+    J=/tmp/probe-cookies.txt; rm -f $J
+    C="curl -sk --resolve auth.{{ domain }}:443:127.0.0.1 --resolve terminal.{{ domain }}:443:127.0.0.1 -b $J -c $J"
+    $C -o /dev/null -X POST https://auth.{{ domain }}/api/firstfactor       -H 'Content-Type: application/json'       -d '{"username":"alice","password":"alice","keepMeLoggedIn":false}'
+    $C -L -o /dev/null "https://terminal.{{ domain }}/oauth2/start?rd=https://terminal.{{ domain }}/"
+    $C -o /tmp/probe-body.txt -w '%{http_code}' "https://terminal.{{ domain }}/"
+    grep -o '<title>[^<]*' /tmp/probe-body.txt || true
+  args:
+    executable: /bin/bash
+  register: signed_in
+  changed_when: false
+
 - name: The provider is up and both gates redirect to a login
   ansible.builtin.assert:
     that:
@@ -68,4 +85,6 @@
       - verdicts.results[0].stdout is match('302 https://terminal.' ~ domain ~ '/oauth2/sign_in')
       - verdicts.results[1].stdout is match('302 https://auth.' ~ domain ~ '/')
       - verdicts.results[2].stdout is match('302 https://code.' ~ domain ~ '/oauth2/sign_in')
-    fail_msg: "{{ verdicts.results | map(attribute='stdout') | list }}"
+      - "'200' in signed_in.stdout"
+      - "'<title>ttyd' in signed_in.stdout"
+    fail_msg: "{{ verdicts.results | map(attribute='stdout') | list }} / {{ signed_in.stdout }}"

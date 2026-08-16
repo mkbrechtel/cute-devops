@@ -16,9 +16,13 @@ users:
     password: "$6$cutedevops$fAki5n1g7eJFebKnFCeBIoDWSowJ0qV7ErvOB8IjUP08E9SxSQ6l01VQ7ipAJEW0cxNIcJDs.uLhPaTugHhip1"
     email: alice@test.example
 
+# one_factor: the probe below signs in with a password only.
+authelia_default_policy: one_factor
+
 authelia_oidc_clients:
   - client_id: oauth2-proxy
     client_secret: test-client-secret-not-for-production
+    authorization_policy: one_factor
     redirect_uris:
       - https://terminal.test.example/oauth2/callback
 

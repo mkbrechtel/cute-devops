@@ -11,3 +11,12 @@ code_server_arch_map:
 
 code_server_deb: "code-server_{{ code_server_version | regex_replace('^v', '') }}_{{ code_server_arch }}.deb"
 code_server_download_url: "{{ code_server_github_repo_url }}/releases/download/{{ code_server_version }}/{{ code_server_deb }}"
+
+# Identifiers of the local Authelia, for the users that have an instance.
+_code_server_authelia_ids: >-
+  {{ (authelia_user_identifiers | default({})) | dict2items
+     | selectattr('key', 'in', code_server_users) | list }}
+code_server_user_ids_auto: >-
+  {{ dict(code_server_users | zip(code_server_users))
+     | combine(dict(_code_server_authelia_ids | map(attribute='value')
+                    | zip(_code_server_authelia_ids | map(attribute='key')))) }}

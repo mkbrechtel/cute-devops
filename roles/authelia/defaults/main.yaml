@@ -71,6 +71,12 @@ authelia_oidc_clients: []
 authelia_oidc_access_token_lifespan: 1 hour
 authelia_oidc_refresh_token_lifespan: 90 minutes
 
+# Pre-create the users' opaque OIDC identifiers and publish them as the fact
+# authelia_user_identifiers (username -> identifier), which the ttyd and
+# code_server routers consume to resolve a subject back to a unix account.
+authelia_export_identifiers: true
+authelia_identifiers_file: "{{ authelia_data_dir }}/user-identifiers.yml"
+
 # Merged recursively over the rendered configuration.
 authelia_extra_config: {}
 

@@ -24,6 +24,7 @@
   register: ttyd_tmpfiles
 
 - name: Create it now  # noqa: no-handler
+  changed_when: true
   ansible.builtin.command: systemd-tmpfiles --create /etc/tmpfiles.d/ttyd.conf
   when: ttyd_tmpfiles.changed
 

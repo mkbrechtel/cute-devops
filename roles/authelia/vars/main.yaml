@@ -22,3 +22,9 @@ authelia_generated_secrets:
   - session-secret
   - storage-encryption-key
   - oidc-hmac-secret
+
+# Every user in the rendered user database.
+authelia_users_all: >-
+  {{ (((users | default({})) | dict2items | selectattr('value.password', 'defined')
+       | map(attribute='key') | list) if authelia_users_from_users else [])
+     | union(authelia_users.keys() | list) }}

@@ -22,12 +22,15 @@ The [`ttyd`](../../roles/ttyd/README.md) role publishes a browser terminal at **
 
 **A real login session.** The unit sets `PAMName=ttyd` against a role-shipped `/etc/pam.d/ttyd` (`pam_limits`, `pam_systemd`), so each instance is a logind session with `XDG_RUNTIME_DIR` and a user manager — rootless podman and `systemctl --user` work as after ssh. Lingering is enabled for the users so their services outlive the terminal.
 
-**One vhost.** `/etc/caddy/conf.d/terminal.<zone>` imports the auth snippet (`ttyd_caddy_auth_snippet`, default `oauth2-proxy-default`, or `authelia`), matches `X-Auth-Request-User` against `^[a-z_][a-z0-9_-]{0,31}$` and proxies to `unix//run/ttyd/<that user>/http.sock`; anything else is 403. ttyd's own auth stays off — the gate authenticates, the route binds identity to backend.
+**One vhost.** `/etc/caddy/conf.d/terminal.<zone>` imports the auth snippet (`ttyd_caddy_auth_snippet`, default `oauth2-proxy-default`, or `authelia`), drops any client-supplied `X-Auth-Request-*`, matches the gate's `X-Auth-Request-Preferred-Username` against `^[a-z_][a-z0-9_-]{0,31}$` and proxies to `unix//run/ttyd/<that user>/http.sock`; anything else is 403. ttyd's own auth stays off — the gate authenticates, the route binds identity to backend.
 
 ## Verified
 
 In the container harness (`./test-in-containers-roles.yaml --tags auth`): `ttyd@alice` is up on its socket, answers on it, and `terminal.<domain>` sends an anonymous request to sign in.
 
 ## Considerations
+
+Routing keys on `X-Auth-Request-Preferred-Username`, not `X-Auth-Request-User`: behind oauth2-proxy and an OIDC provider the latter is the subject claim — for Authelia a UUID, which names no account on the host. The username claim is what both gates agree on.
+
 
 A `UMask=` on the unit to shape the socket mode is wrong here: it also shapes every file the user's shell creates. The directory permissions are what protect the socket.

@@ -8,7 +8,7 @@ SPDX-License-Identifier: EUPL-1.2
 
 # ttyd
 
-Publishes a browser terminal per user behind one vhost. [ttyd](https://github.com/tsl0922/ttyd) is installed from the pinned GitHub release (checksum vendored in `files/`); each user in `ttyd_users` gets a `ttyd@<user>.service` running as that user, in their home, on `/run/ttyd/<user>/http.sock`. The vhost `terminal.<zone>` imports the [forward-auth](../../docs/patterns/forward-auth.md) snippet and proxies to the socket named by `X-Auth-Request-User` — one vhost, N users, no ttyd auth of its own.
+Publishes a browser terminal per user behind one vhost. [ttyd](https://github.com/tsl0922/ttyd) is installed from the pinned GitHub release (checksum vendored in `files/`); each user in `ttyd_users` gets a `ttyd@<user>.service` running as that user, in their home, on `/run/ttyd/<user>/http.sock`. The vhost `terminal.<zone>` imports the [forward-auth](../../docs/patterns/forward-auth.md) snippet and proxies to the socket named by the gate’s `X-Auth-Request-Preferred-Username` — one vhost, N users, no ttyd auth of its own.
 
 Each instance is a real logind session (`PAMName=ttyd`, `/etc/pam.d/ttyd`), so `XDG_RUNTIME_DIR`, the user manager and rootless podman work as after an ssh login; lingering is enabled for the users so their services survive the terminal.
 

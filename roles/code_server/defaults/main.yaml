@@ -23,7 +23,15 @@ code_server_socket_group: https-socket-access
 code_server_auth: none
 code_server_extra_args: ""
 
-# The one vhost; the reverse proxy routes on X-Auth-Request-User.
+# Which identity the gate reports for a user maps to which unix account.
+# Behind oauth2-proxy and an OIDC provider X-Auth-Request-User is the
+# subject — opaque and stable, unlike a username — so the vhost resolves it
+# through this map. Defaults to the local Authelia's identifiers (published
+# by that role) plus each user's own name, which is what a local Authelia
+# gate sends. Set explicitly when the provider runs on another host.
+code_server_user_ids: "{{ code_server_user_ids_auto }}"
+
+# The one vhost; the reverse proxy routes each request to its user.
 code_server_zone: "{{ domain }}"
 code_server_vhost: "code.{{ code_server_zone }}"
 code_server_caddy_auth_snippet: oauth2-proxy-default
