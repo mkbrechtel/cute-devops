@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+- name: Restart code-server instances
+  ansible.builtin.systemd:
+    name: "code-server@{{ item }}"
+    state: restarted
+    daemon_reload: true
+  loop: "{{ code_server_users }}"
+  listen: restart code-server
+
+- name: Reload caddy
+  ansible.builtin.command: "{{ code_server_caddy_reload_command }}"
+  changed_when: true
+  listen: reload caddy

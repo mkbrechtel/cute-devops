@@ -1,0 +1,22 @@
+{#
+SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+
+SPDX-License-Identifier: EUPL-1.2
+#}
+# This file is managed by the osahris.cute_devops.code_server Ansible role!
+# MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
+#
+# One vhost, one editor per authenticated user: the gate supplies
+# X-Auth-Request-User, the request goes to that user's socket.
+
+{{ code_server_vhost }} {
+	route {
+		import {{ code_server_caddy_auth_snippet }}
+		@user header_regexp user X-Auth-Request-User ^[a-z_][a-z0-9_-]{0,31}$
+		handle @user {
+			reverse_proxy unix/{{ code_server_run_dir }}/{re.user.0}/http.sock
+		}
+		respond "no editor for this user" 403
+	}
+}

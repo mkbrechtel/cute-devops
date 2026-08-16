@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+code_server_arch_map:
+  x86_64: amd64
+  aarch64: arm64
+
+code_server_deb: "code-server_{{ code_server_version | regex_replace('^v', '') }}_{{ code_server_arch }}.deb"
+code_server_download_url: "{{ code_server_github_repo_url }}/releases/download/{{ code_server_version }}/{{ code_server_deb }}"

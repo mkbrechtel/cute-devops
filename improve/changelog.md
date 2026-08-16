@@ -35,6 +35,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Container test harness: `auth` instance deploying the three roles
   and asserting discovery and gate verdicts through Caddy
 - New `php_fpm` role: Debian's php-fpm for PHP apps behind Caddy
+- New `code_server` role: VS Code per user (`code-server@<user>` on
+  `/run/code-server/<user>/http.sock`, PAM session) behind one
+  header-routed vhost `code.<zone>`
 - `logind` role: configures `systemd-logind` session retention via a drop-in,
   keeping a user's `user@<uid>.service` manager and `/run/user/<uid>` alive
   for `UserStopDelaySec=72h` after their last logout instead of the stock 10
@@ -72,6 +75,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in `$HOME`) gets worktrees under `<clone>/work/<name>`
 
 ### Changed
+- `ttyd` role: per-user `ttyd@<user>` instances on
+  `/run/ttyd/<user>/http.sock` as logind sessions, lingering, one
+  header-routed vhost `terminal.<zone>` behind the forward-auth gate
 - `postfix`, `postfixadmin`, `sympa` roles depend on `caddy`, not
   `apache`: postfixadmin is served by `php_fastcgi`, sympa's `wwsympa`
   over its FastCGI socket, postfix's certbot uses a Caddy-served webroot;

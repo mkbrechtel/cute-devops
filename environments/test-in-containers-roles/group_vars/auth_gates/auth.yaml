@@ -15,7 +15,6 @@ users:
     # "alice", sha512-crypt — a test fixture, not a secret
     password: "$6$cutedevops$fAki5n1g7eJFebKnFCeBIoDWSowJ0qV7ErvOB8IjUP08E9SxSQ6l01VQ7ipAJEW0cxNIcJDs.uLhPaTugHhip1"
     email: alice@test.example
-    groups: [admins]
 
 authelia_oidc_clients:
   - client_id: oauth2-proxy

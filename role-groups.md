@@ -95,6 +95,7 @@ groups:
       - ansible
       - ssh_agent
       - ttyd
+      - code_server
   - name: Ecosystem
     roles:
       - gitflower

@@ -1,0 +1,15 @@
+{#
+SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+
+SPDX-License-Identifier: EUPL-1.2
+#}
+# This file is managed by the osahris.cute_devops.ttyd Ansible role!
+# MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
+#
+# ttyd@<user> opens a logind session so the terminal has XDG_RUNTIME_DIR
+# and a user manager, like an ssh login.
+auth      required  pam_permit.so
+account   required  pam_permit.so
+session   required  pam_limits.so
+session   optional  pam_systemd.so

@@ -20,6 +20,6 @@ A `devbox` host profile that composes a browser-based development environment fr
 
 The `devbox` role requires the following three roles by default (and applies sensible composition defaults across them):
 
-- [ttyd](ttyd.feature.md) — browser-based terminal.
-- [code-server](code-server.feature.md) — browser VS Code per user.
+- [ttyd](../docs/features/ttyd.md) — browser-based terminal.
+- [code-server](../docs/features/code-server.md) — browser VS Code per user.
 - [claude-code](claude-code.feature.md) — pinned-version Claude Code with central guardrail configuration.
