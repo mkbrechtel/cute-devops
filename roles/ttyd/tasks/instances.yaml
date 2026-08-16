@@ -16,6 +16,17 @@
     dest: /etc/pam.d/ttyd
     mode: "0644"
 
+- name: Socket parent directory at boot
+  ansible.builtin.template:
+    src: tmpfiles.conf.j2
+    dest: /etc/tmpfiles.d/ttyd.conf
+    mode: "0644"
+  register: ttyd_tmpfiles
+
+- name: Create it now  # noqa: no-handler
+  ansible.builtin.command: systemd-tmpfiles --create /etc/tmpfiles.d/ttyd.conf
+  when: ttyd_tmpfiles.changed
+
 - name: Template unit
   ansible.builtin.template:
     src: ttyd@.service.j2
