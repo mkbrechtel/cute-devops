@@ -1,0 +1,31 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+- name: Create the download directory
+  ansible.builtin.file:
+    path: "{{ code_server_download_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Read the pinned checksum
+  ansible.builtin.set_fact:
+    code_server_expected_checksum: >-
+      {{ lookup('file', 'releases/download/' ~ code_server_version ~ '/checksums.sha256').splitlines()
+         | select('search', code_server_deb ~ '$')
+         | first | split() | first }}
+
+- name: Download the release .deb
+  ansible.builtin.get_url:
+    url: "{{ code_server_download_url }}"
+    dest: "{{ code_server_download_dir }}/{{ code_server_deb }}"
+    checksum: "sha256:{{ code_server_expected_checksum }}"
+    mode: "0644"
+
+- name: Install the .deb
+  ansible.builtin.apt:
+    deb: "{{ code_server_download_dir }}/{{ code_server_deb }}"
+  notify: restart code-server

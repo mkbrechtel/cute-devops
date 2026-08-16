@@ -30,7 +30,7 @@ The drop-in carries the managed-file header from [coding conventions](../improve
 
 This is the host-wide alternative to per-user `loginctl enable-linger`. Both keep a user's systemd instance alive independently of their sessions, but linger is per-user state that something has to maintain as users come and go, while `UserStopDelaySec=` is one file that covers everybody who ever logs in.
 
-That matters for [ttyd](ttyd.feature.md): a browser terminal is exactly the kind of session a user closes and reopens all day, and rootless podman inside it needs the user manager and runtime directory to persist across those gaps. With this role deployed, ttyd needs no per-user session management of its own.
+That matters for [ttyd](../docs/features/ttyd.md): a browser terminal is exactly the kind of session a user closes and reopens all day, and rootless podman inside it needs the user manager and runtime directory to persist across those gaps. With this role deployed, ttyd needs no per-user session management of its own.
 
 ## Open questions
 

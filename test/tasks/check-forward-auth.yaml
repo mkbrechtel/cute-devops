@@ -13,20 +13,18 @@
     name: curl
     state: present
 
-# A gated vhost, as a service role would write it. Nothing listens on the
-# app socket; the gate must answer before it matters.
-- name: Write a gated test vhost
+# A vhost gated by Authelia directly, as a service role would write it.
+# Nothing listens on the app socket; the gate answers before it matters.
+# (terminal.<domain> and code.<domain> come from the ttyd and code_server
+# roles.)
+- name: Write a directly gated test vhost
   ansible.builtin.copy:
     content: |
-      terminal.{{ domain }} {
-          import oauth2-proxy-default
-          reverse_proxy unix//run/https/terminal.{{ domain }}/http.sock
-      }
       direct.{{ domain }} {
           import authelia
           reverse_proxy unix//run/https/direct.{{ domain }}/http.sock
       }
-    dest: /etc/caddy/conf.d/terminal.{{ domain }}
+    dest: /etc/caddy/conf.d/direct.{{ domain }}
     mode: "0640"
     group: caddy
   register: gated_vhost
@@ -40,10 +38,12 @@
 - name: Wait for the sockets
   ansible.builtin.wait_for:
     path: "{{ item }}"
-    timeout: 30
+    timeout: 60
   loop:
     - /run/https/auth.{{ domain }}/http.sock
     - /run/oauth2-proxy/default.sock
+    - /run/ttyd/alice/http.sock
+    - /run/code-server/alice/http.sock
 
 - name: Ask Authelia for its OIDC discovery document  # noqa: command-instead-of-module
   ansible.builtin.command: >-
@@ -58,7 +58,7 @@
     --resolve {{ item }}.{{ domain }}:443:127.0.0.1 -k https://{{ item }}.{{ domain }}/
   register: verdicts
   changed_when: false
-  loop: [terminal, direct]
+  loop: [terminal, direct, code]
 
 - name: The provider is up and both gates redirect to a login
   ansible.builtin.assert:
@@ -67,4 +67,5 @@
       - "'email_verified' in (discovery.stdout | from_json).claims_supported"
       - verdicts.results[0].stdout is match('302 https://terminal.' ~ domain ~ '/oauth2/sign_in')
       - verdicts.results[1].stdout is match('302 https://auth.' ~ domain ~ '/')
+      - verdicts.results[2].stdout is match('302 https://code.' ~ domain ~ '/oauth2/sign_in')
     fail_msg: "{{ verdicts.results | map(attribute='stdout') | list }}"

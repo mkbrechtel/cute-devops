@@ -5,13 +5,12 @@
 
 ---
 
-- name: Setup ttyd via download
-  ansible.builtin.import_tasks: setup_via_download.yaml
-  when: ttyd_setup_method == "download"
+- name: Install code-server
+  ansible.builtin.import_tasks: install.yaml
 
 - name: Per-user instances
   ansible.builtin.import_tasks: instances.yaml
 
 - name: Publish the vhost
   ansible.builtin.import_tasks: caddy.yaml
-  when: ttyd_configure_caddy
+  when: code_server_configure_caddy

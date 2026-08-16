@@ -28,3 +28,28 @@ ttyd_install_dir: "/opt/ttyd"
 
 # Feature flags
 ttyd_with_usr_local_bin_symlink: false
+
+# --- per-user backends and the routed vhost ---
+
+# Users that get a ttyd@<user> instance; default: every entry of `users`.
+ttyd_users: "{{ users | default({}) | list }}"
+# Shell and working directory for the terminal ("~" = the user's home).
+ttyd_shell: /bin/bash
+ttyd_cwd: "~"
+# Each instance is a real logind session (PAM), so XDG_RUNTIME_DIR and
+# rootless podman work; lingering keeps the user's services alive.
+ttyd_enable_linger: true
+ttyd_run_dir: /run/ttyd
+ttyd_socket_group: https-socket-access
+
+# The one vhost; the reverse proxy routes on X-Auth-Request-User.
+ttyd_zone: "{{ domain }}"
+ttyd_vhost: "terminal.{{ ttyd_zone }}"
+# Caddy snippet that authenticates the vhost: oauth2-proxy-<instance>, or
+# authelia for the direct gate.
+ttyd_caddy_auth_snippet: oauth2-proxy-default
+ttyd_configure_caddy: true
+ttyd_caddy_conf_dir: /etc/caddy/conf.d
+ttyd_caddy_conf_group: caddy
+ttyd_caddy_conf_mode: "0640"
+ttyd_caddy_reload_command: systemctl reload caddy

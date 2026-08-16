@@ -1,0 +1,29 @@
+{#
+SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+
+SPDX-License-Identifier: EUPL-1.2
+#}
+# This file is managed by the osahris.cute_devops.code_server Ansible role!
+# MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
+
+[Unit]
+Description=code-server for %i
+After=network.target
+
+[Service]
+Type=exec
+User=%i
+PAMName=code-server
+WorkingDirectory=~
+ExecStartPre=+/usr/bin/install -d -m 0711 {{ code_server_run_dir }}
+ExecStartPre=+/usr/bin/install -d -o %i -g {{ code_server_socket_group }} -m 2750 {{ code_server_run_dir }}/%i
+ExecStartPre=+/bin/chmod 2750 {{ code_server_run_dir }}/%i
+ExecStartPre=+/bin/chgrp {{ code_server_socket_group }} {{ code_server_run_dir }}/%i
+ExecStartPre=-/bin/rm -f {{ code_server_run_dir }}/%i/http.sock
+ExecStart=/usr/bin/code-server --auth {{ code_server_auth }} --socket {{ code_server_run_dir }}/%i/http.sock --socket-mode 0660 --disable-telemetry --disable-update-check {{ code_server_extra_args }}
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

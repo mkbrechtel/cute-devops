@@ -68,11 +68,17 @@
         mode: "0644"
       tags: auth
   roles:
+    - role: users
+      tags: auth
     - role: caddy
       tags: auth
     - role: authelia
       tags: auth
     - role: oauth2_proxy
+      tags: auth
+    - role: ttyd
+      tags: auth
+    - role: code_server
       tags: auth
   tasks:
     - name: Check the stack answers

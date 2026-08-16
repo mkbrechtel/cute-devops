@@ -1,0 +1,40 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+- name: Create the socket access group
+  ansible.builtin.group:
+    name: "{{ code_server_socket_group }}"
+    system: true
+
+- name: PAM service for code-server sessions
+  ansible.builtin.template:
+    src: pam.j2
+    dest: /etc/pam.d/code-server
+    mode: "0644"
+
+# Overrides the package's code-server@.service (which listens on TCP).
+- name: Template unit
+  ansible.builtin.template:
+    src: code-server@.service.j2
+    dest: /etc/systemd/system/code-server@.service
+    mode: "0644"
+  notify: restart code-server
+
+- name: Enable lingering
+  ansible.builtin.command: loginctl enable-linger {{ item }}
+  args:
+    creates: /var/lib/systemd/linger/{{ item }}
+  loop: "{{ code_server_users }}"
+  when: code_server_enable_linger
+
+- name: Enable and start instances
+  ansible.builtin.systemd:
+    name: "code-server@{{ item }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+  loop: "{{ code_server_users }}"

@@ -1,0 +1,22 @@
+{#
+SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+
+SPDX-License-Identifier: EUPL-1.2
+#}
+# This file is managed by the osahris.cute_devops.ttyd Ansible role!
+# MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
+#
+# One vhost, one terminal per authenticated user: the gate supplies
+# X-Auth-Request-User, the request goes to that user's socket.
+
+{{ ttyd_vhost }} {
+	route {
+		import {{ ttyd_caddy_auth_snippet }}
+		@user header_regexp user X-Auth-Request-User ^[a-z_][a-z0-9_-]{0,31}$
+		handle @user {
+			reverse_proxy unix/{{ ttyd_run_dir }}/{re.user.0}/http.sock
+		}
+		respond "no terminal for this user" 403
+	}
+}

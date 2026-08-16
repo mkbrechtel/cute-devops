@@ -1,0 +1,28 @@
+{#
+SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+
+SPDX-License-Identifier: EUPL-1.2
+#}
+# This file is managed by the osahris.cute_devops.ttyd Ansible role!
+# MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
+
+[Unit]
+Description=ttyd web terminal for %i
+After=network.target
+
+[Service]
+User=%i
+PAMName=ttyd
+WorkingDirectory=~
+ExecStartPre=+/usr/bin/install -d -m 0711 {{ ttyd_run_dir }}
+ExecStartPre=+/usr/bin/install -d -o %i -g {{ ttyd_socket_group }} -m 2750 {{ ttyd_run_dir }}/%i
+ExecStartPre=+/bin/chmod 2750 {{ ttyd_run_dir }}/%i
+ExecStartPre=+/bin/chgrp {{ ttyd_socket_group }} {{ ttyd_run_dir }}/%i
+ExecStartPre=-/bin/rm -f {{ ttyd_run_dir }}/%i/http.sock
+ExecStart={{ ttyd_install_path }} --writable --interface {{ ttyd_run_dir }}/%i/http.sock --cwd {{ ttyd_cwd }} {{ ttyd_shell }}
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

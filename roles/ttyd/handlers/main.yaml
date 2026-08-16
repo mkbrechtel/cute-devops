@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+- name: Restart ttyd instances
+  ansible.builtin.systemd:
+    name: "ttyd@{{ item }}"
+    state: restarted
+    daemon_reload: true
+  loop: "{{ ttyd_users }}"
+  listen: restart ttyd
+
+- name: Reload caddy
+  ansible.builtin.command: "{{ ttyd_caddy_reload_command }}"
+  changed_when: true
+  listen: reload caddy

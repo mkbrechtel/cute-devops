@@ -1,0 +1,39 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+- name: Create the socket access group
+  ansible.builtin.group:
+    name: "{{ ttyd_socket_group }}"
+    system: true
+
+- name: PAM service for ttyd sessions
+  ansible.builtin.template:
+    src: pam.j2
+    dest: /etc/pam.d/ttyd
+    mode: "0644"
+
+- name: Template unit
+  ansible.builtin.template:
+    src: ttyd@.service.j2
+    dest: /etc/systemd/system/ttyd@.service
+    mode: "0644"
+  notify: restart ttyd
+
+- name: Enable lingering
+  ansible.builtin.command: loginctl enable-linger {{ item }}
+  args:
+    creates: /var/lib/systemd/linger/{{ item }}
+  loop: "{{ ttyd_users }}"
+  when: ttyd_enable_linger
+
+- name: Enable and start instances
+  ansible.builtin.systemd:
+    name: "ttyd@{{ item }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+  loop: "{{ ttyd_users }}"

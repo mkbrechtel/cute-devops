@@ -1,0 +1,34 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+# Upstream release (GitHub tag, with the leading "v"), installed from its .deb.
+code_server_version: v4.132.0
+code_server_github_repo_url: https://github.com/coder/code-server
+code_server_arch: "{{ code_server_arch_map[ansible_architecture] | default('amd64') }}"
+code_server_download_dir: /opt/code-server
+
+# Users that get a code-server@<user> instance; default: every entry of `users`.
+code_server_users: "{{ users | default({}) | list }}"
+# Each instance is a real logind session (PAM), so terminals inside VS Code
+# have XDG_RUNTIME_DIR and rootless podman; lingering keeps user services alive.
+code_server_enable_linger: true
+code_server_run_dir: /run/code-server
+code_server_socket_group: https-socket-access
+# code-server's own auth is off: the gate in front authenticates and the
+# vhost routes each user to their own instance.
+code_server_auth: none
+code_server_extra_args: ""
+
+# The one vhost; the reverse proxy routes on X-Auth-Request-User.
+code_server_zone: "{{ domain }}"
+code_server_vhost: "code.{{ code_server_zone }}"
+code_server_caddy_auth_snippet: oauth2-proxy-default
+code_server_configure_caddy: true
+code_server_caddy_conf_dir: /etc/caddy/conf.d
+code_server_caddy_conf_group: caddy
+code_server_caddy_conf_mode: "0640"
+code_server_caddy_reload_command: systemctl reload caddy

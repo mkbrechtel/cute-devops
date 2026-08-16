@@ -39,7 +39,7 @@ Where a scheme needs no separate gate process — basic auth, client certificate
 This is the whole of what a service role may assume.
 
 - **Verdict.** 200 means allow. Any other status is the gate's answer to the client — a 401, or a redirect into a login flow — and the rpx surfaces it rather than proxying.
-- **Identity headers.** On allow, the request reaching the app carries `X-Auth-Request-User`, `X-Auth-Request-Email` and `X-Auth-Request-Preferred-Username`. `X-Auth-Request-User` is the stable local identifier, and the one the per-user routers in [ttyd](../../issues/ttyd.feature.md) and [code-server](../../issues/code-server.feature.md) key on. The spelling is oauth2-proxy's; a gate that answers in another one — Authelia emits `Remote-User`, `Remote-Email`, `Remote-Name` — is renamed to it in the rpx snippet (Caddy: `copy_headers Remote-User>X-Auth-Request-User`), so the contract holds at the app regardless of the gate.
+- **Identity headers.** On allow, the request reaching the app carries `X-Auth-Request-User`, `X-Auth-Request-Email` and `X-Auth-Request-Preferred-Username`. `X-Auth-Request-User` is the stable local identifier, and the one the per-user routers in [ttyd](../features/ttyd.md) and [code-server](../features/code-server.md) key on. The spelling is oauth2-proxy's; a gate that answers in another one — Authelia emits `Remote-User`, `Remote-Email`, `Remote-Name` — is renamed to it in the rpx snippet (Caddy: `copy_headers Remote-User>X-Auth-Request-User`), so the contract holds at the app regardless of the gate.
 - **Identity only.** Group and role lists never flow through as headers. A scheme may *gate* on them, but what reaches the app is who the user is, not what they may do.
 - **Trust.** App sockets are unbound from the network ([reverse-proxy.pattern.md](reverse-proxy.md)), so within the trust boundary below the rpx chain is the only producer of `X-Auth-Request-*`. Spoofing is structurally impossible rather than filtered against, and apps may trust the headers as they arrive. This bullet is the one that fails first if the boundary is stretched, which is why the boundary is part of the contract and not advice.
 - **Endpoint.** The rpx addresses the gate by URL, so a gate that is its own process may be local or on a neighbouring machine — but only within one trust boundary, as below. A local one publishes on a unix socket like any other service in the collection, which is the default.
@@ -66,7 +66,7 @@ For a single-user devbox that is frequently the right answer and costs nothing t
 
 ### Why the contract is the pattern
 
-The valuable, stable thing here is not any one gate — it is that [ttyd](../../issues/ttyd.feature.md) and [code-server](../../issues/code-server.feature.md) route per user off a header without caring where the header came from.
+The valuable, stable thing here is not any one gate — it is that [ttyd](../features/ttyd.md) and [code-server](../features/code-server.md) route per user off a header without caring where the header came from.
 Fixing the contract first means the cheap scheme and the full SSO scheme are the same shape to everything downstream, and swapping them is a reverse-proxy edit rather than a service-role change.
 It also keeps the collection honest about the gap between "authenticated" and "authorized": the gate answers the first, the app is still responsible for the second.
 
@@ -83,7 +83,7 @@ Three reasons, in descending order of how much they should worry a deployer:
 - **Every request pays the round trip.** The sub-request carries the original headers and no body, so bandwidth is trivial; the cost is one round trip plus the gate's session check, per gated request. Sub-millisecond over a local socket, a few milliseconds inside a datacentre, tens of them across the internet — and paid again on every asset a page pulls.
 
 Two things soften that last one where this collection actually spends it.
-[ttyd](../../issues/ttyd.feature.md) and [code-server](../../issues/code-server.feature.md) are websocket applications: the gate is consulted once at the upgrade, and the long-lived connection that follows carries the session without further checks, so the per-request cost lands on the initial page load rather than on use.
+[ttyd](../features/ttyd.md) and [code-server](../features/code-server.md) are websocket applications: the gate is consulted once at the upgrade, and the long-lived connection that follows carries the session without further checks, so the per-request cost lands on the initial page load rather than on use.
 An rpx that can cache the verdict against the session cookie for a short TTL (nginx's `proxy_cache` over `auth_request`) collapses the repeat cost for the assets too.
 
 The websocket exemption has a security edge worth stating: a session revoked at the gate does not reach a connection that is already open, so revocation takes effect when the socket drops rather than at once.

@@ -1,0 +1,15 @@
+# SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+# SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+---
+
+- name: Write the vhost
+  ansible.builtin.template:
+    src: caddy-vhost.j2
+    dest: "{{ code_server_caddy_conf_dir }}/{{ code_server_vhost }}"
+    owner: root
+    group: "{{ code_server_caddy_conf_group }}"
+    mode: "{{ code_server_caddy_conf_mode }}"
+  notify: reload caddy
