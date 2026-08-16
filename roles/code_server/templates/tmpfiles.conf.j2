@@ -1,0 +1,11 @@
+{#
+SPDX-FileCopyrightText: 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+SPDX-FileCopyrightText: 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+
+SPDX-License-Identifier: EUPL-1.2
+#}
+# This file is managed by the osahris.cute_devops.code_server Ansible role!
+# MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
+# The parent of the per-user socket directories exists from boot, so a
+# reverse proxy that bind-mounts it can start before the first instance.
+d {{ code_server_run_dir }} 0711 root root -

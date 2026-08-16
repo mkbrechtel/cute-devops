@@ -17,6 +17,17 @@
     mode: "0644"
 
 # Overrides the package's code-server@.service (which listens on TCP).
+- name: Socket parent directory at boot
+  ansible.builtin.template:
+    src: tmpfiles.conf.j2
+    dest: /etc/tmpfiles.d/code-server.conf
+    mode: "0644"
+  register: code_server_tmpfiles
+
+- name: Create it now  # noqa: no-handler
+  ansible.builtin.command: systemd-tmpfiles --create /etc/tmpfiles.d/code-server.conf
+  when: code_server_tmpfiles.changed
+
 - name: Template unit
   ansible.builtin.template:
     src: code-server@.service.j2
