@@ -1,0 +1,104 @@
+---
+
+# SPDX-FileCopyrightText: 2016 - 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+# SPDX-FileCopyrightText: 2020 - 2025 Uniklinik Köln
+# SPDX-FileCopyrightText: 2025 - 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+- name: Install qemu
+  ansible.builtin.apt:
+    name: qemu-system-x86
+    state: present
+
+- name: Create VM admin group
+  ansible.builtin.group:
+    name: "{{ vms_admin_group }}"
+    system: true
+
+- name: Create VM run user
+  ansible.builtin.user:
+    name: "{{ vms_run_user }}"
+    system: true
+    groups: [kvm]
+    append: true
+    home: "{{ vms_disk_dir }}"
+    create_home: false
+    shell: /usr/sbin/nologin
+
+- name: Create disk image directory
+  ansible.builtin.file:
+    path: "{{ vms_disk_dir }}"
+    state: directory
+    owner: "{{ vms_run_user }}"
+    group: "{{ vms_admin_group }}"
+    mode: "0750"
+
+- name: Create VM config directory
+  ansible.builtin.file:
+    path: /etc/vms
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install QMP powerdown helper
+  ansible.builtin.copy:
+    src: vm-powerdown
+    dest: /usr/local/lib/vms/vm-powerdown
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install vm@ template unit
+  ansible.builtin.template:
+    src: vm@.service.j2
+    dest: /etc/systemd/system/vm@.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Allow VM admins to manage vm units
+  ansible.builtin.template:
+    src: vms.rules.j2
+    dest: /etc/polkit-1/rules.d/50-vms.rules
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Configure bridged networking
+  ansible.builtin.include_tasks: bridge_helper.yml
+  when: vms_with_bridge | bool
+
+- name: Configure web console
+  ansible.builtin.include_tasks: web_console.yml
+  when: vms_with_web_console | bool
+
+- name: Flush handlers before starting instances
+  ansible.builtin.meta: flush_handlers
+
+- name: Manage VM instances
+  ansible.builtin.include_tasks: instance.yml
+  loop: "{{ vms_instances | dict2items }}"
+  loop_control:
+    loop_var: vm_item
+    label: "{{ vm_item.key }}"
+  vars:
+    vm_name: "{{ vm_item.key }}"
+    vm: "{{ vm_item.value }}"
+
+- name: Find configured VMs
+  ansible.builtin.find:
+    paths: /etc/vms
+    patterns: "*.cfg"
+  register: vms_found_configs
+
+- name: Retire removed VM instances
+  ansible.builtin.include_tasks: retire.yml
+  loop: >-
+    {{ vms_found_configs.files | map(attribute='path')
+       | map('basename') | map('regex_replace', '\.cfg$', '')
+       | difference(vms_instances.keys() | list) | sort }}
+  loop_control:
+    loop_var: vm_name

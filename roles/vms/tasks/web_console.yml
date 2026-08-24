@@ -1,0 +1,39 @@
+---
+
+# SPDX-FileCopyrightText: 2016 - 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+# SPDX-FileCopyrightText: 2020 - 2025 Uniklinik Köln
+# SPDX-FileCopyrightText: 2025 - 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+- name: Install web console packages
+  ansible.builtin.apt:
+    name:
+      - novnc
+      - websockify
+      - acl
+    state: present
+
+- name: Create proxy socket access group
+  ansible.builtin.group:
+    name: "{{ vms_https_socket_group }}"
+    system: true
+
+- name: Install websockify@ template unit
+  ansible.builtin.template:
+    src: websockify@.service.j2
+    dest: /etc/systemd/system/websockify@.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Deploy Caddy vhost
+  ansible.builtin.template:
+    src: caddy-vhost.j2
+    dest: "/etc/caddy/conf.d/{{ vms_web_console_vhost }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload caddy
+  when: vms_configure_caddy | bool

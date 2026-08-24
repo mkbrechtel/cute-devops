@@ -1,0 +1,27 @@
+{#
+SPDX-FileCopyrightText: 2016 - 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+SPDX-FileCopyrightText: 2020 - 2025 Uniklinik Köln
+SPDX-FileCopyrightText: 2025 - 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+
+SPDX-License-Identifier: EUPL-1.2
+#}
+# This file is managed by the osahris.cute_devops.vms Ansible role!
+# MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
+
+[Unit]
+Description=Web console websocket bridge for VM %i
+Requires=vm@%i.service
+After=vm@%i.service
+PartOf=vm@%i.service
+
+[Service]
+Type=exec
+User={{ vms_run_user }}
+Group={{ vms_https_socket_group }}
+# traverse-only for the proxy group; the run dir stays 0750 vm-run:vm-admin
+ExecStartPre=+/usr/bin/setfacl -m g:{{ vms_https_socket_group }}:--x /run/vms/%i
+ExecStart=/usr/bin/websockify --unix-listen=/run/vms/%i/websock --unix-listen-mode=0660 --unix-target=/run/vms/%i/vnc
+Restart=on-failure
+
+[Install]
+WantedBy=vm@%i.service

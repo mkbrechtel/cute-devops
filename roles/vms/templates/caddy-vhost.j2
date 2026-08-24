@@ -1,0 +1,27 @@
+{#
+SPDX-FileCopyrightText: 2016 - 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+SPDX-FileCopyrightText: 2020 - 2025 Uniklinik Köln
+SPDX-FileCopyrightText: 2025 - 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+
+SPDX-License-Identifier: EUPL-1.2
+#}
+# This file is managed by the osahris.cute_devops.vms Ansible role!
+# MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
+
+# One vhost, N VM consoles: noVNC client at /, each VM's websocket at
+# /<name>/websock. Open a console at
+# /vnc.html?path=<name>/websock&autoconnect=true
+{{ vms_web_console_vhost }} {
+{% if vms_caddy_extra %}
+{{ vms_caddy_extra | indent(8, true) }}
+{% endif %}
+{% for name in vms_instances.keys() | sort %}
+        handle /{{ name }}/websock {
+                reverse_proxy unix//run/vms/{{ name }}/websock
+        }
+{% endfor %}
+        handle {
+                root * /usr/share/novnc
+                file_server
+        }
+}

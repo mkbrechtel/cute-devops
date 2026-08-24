@@ -1,0 +1,32 @@
+{#
+SPDX-FileCopyrightText: 2016 - 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+SPDX-FileCopyrightText: 2020 - 2025 Uniklinik Köln
+SPDX-FileCopyrightText: 2025 - 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+
+SPDX-License-Identifier: EUPL-1.2
+#}
+# This file is managed by the osahris.cute_devops.vms Ansible role!
+# MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
+
+# The unit is policy, /etc/vms/%i.cfg is the VM. Per-instance
+# overrides (resource limits, extra qemu args) go in a
+# vm@<name>.service.d/ drop-in.
+
+[Unit]
+Description=Virtual machine %i
+After=network.target
+
+[Service]
+Type=exec
+User={{ vms_run_user }}
+Group={{ vms_admin_group }}
+UMask=0007
+RuntimeDirectory=vms/%i
+RuntimeDirectoryMode=0750
+ExecStart=/usr/bin/qemu-system-x86_64 -nodefaults -display none -cpu host -name %i -readconfig /etc/vms/%i.cfg
+ExecStop=/usr/local/lib/vms/vm-powerdown /run/vms/%i/qmp
+TimeoutStopSec=120
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

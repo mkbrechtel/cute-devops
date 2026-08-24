@@ -1,0 +1,85 @@
+{#
+SPDX-FileCopyrightText: 2016 - 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+SPDX-FileCopyrightText: 2020 - 2025 Uniklinik Köln
+SPDX-FileCopyrightText: 2025 - 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+
+SPDX-License-Identifier: EUPL-1.2
+#}
+# This file is managed by the osahris.cute_devops.vms Ansible role!
+# MANUAL CHANGES WILL BE OVERWRITTEN WITHOUT WARNING!
+{# stable per-NIC MACs in the QEMU/KVM prefix, derived from VM name #}
+{% macro mac(index) -%}
+{% set h = (vm_name ~ '/' ~ index) | md5 -%}
+52:54:00:{{ h[0:2] }}:{{ h[2:4] }}:{{ h[4:6] }}
+{%- endmacro %}
+
+[name]
+  guest = "{{ vm_name }}"
+
+[machine]
+  type = "q35"
+  accel = "kvm"
+
+[memory]
+  size = "{{ vm.memory | default('1G') }}"
+
+[smp-opts]
+  cpus = "{{ vm.cpus | default(1) }}"
+
+[drive "disk0"]
+  file = "{{ vms_disk_dir }}/{{ vm_name }}.qcow2"
+  format = "qcow2"
+  if = "none"
+
+[device "virtio-disk0"]
+  driver = "virtio-blk-pci"
+  drive = "disk0"
+
+{% for bridge in vm.networks | default([]) %}
+[netdev "net{{ loop.index0 }}"]
+  type = "bridge"
+  br = "{{ bridge }}"
+
+[device "nic{{ loop.index0 }}"]
+  driver = "virtio-net-pci"
+  netdev = "net{{ loop.index0 }}"
+  mac = "{{ vm.mac | default(mac(loop.index0)) if loop.index0 == 0 else mac(loop.index0) }}"
+
+{% else %}
+[netdev "net0"]
+  type = "user"
+
+[device "nic0"]
+  driver = "virtio-net-pci"
+  netdev = "net0"
+  mac = "{{ vm.mac | default(mac(0)) }}"
+
+{% endfor %}
+[chardev "qmp"]
+  backend = "socket"
+  path = "/run/vms/{{ vm_name }}/qmp"
+  server = "on"
+  wait = "off"
+
+[mon "qmp"]
+  mode = "control"
+  chardev = "qmp"
+
+[chardev "console"]
+  backend = "socket"
+  path = "/run/vms/{{ vm_name }}/console"
+  server = "on"
+  wait = "off"
+
+[device "serial0"]
+  driver = "isa-serial"
+  chardev = "console"
+{% if vms_with_web_console | bool %}
+
+[vnc]
+  vnc = "unix:/run/vms/{{ vm_name }}/vnc"
+{% endif %}
+{% if vm.extra_config | default('') %}
+
+{{ vm.extra_config }}
+{% endif %}

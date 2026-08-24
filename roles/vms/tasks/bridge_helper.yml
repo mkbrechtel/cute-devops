@@ -1,0 +1,48 @@
+---
+
+# SPDX-FileCopyrightText: 2016 - 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+# SPDX-FileCopyrightText: 2020 - 2025 Uniklinik Köln
+# SPDX-FileCopyrightText: 2025 - 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+# Debian ships qemu-bridge-helper inert (0755 root:root). Setuid it,
+# executable only by the qemu user — not a host-wide grant.
+- name: Check bridge helper statoverride
+  ansible.builtin.command:
+    cmd: dpkg-statoverride --list /usr/lib/qemu/qemu-bridge-helper
+  register: vms_statoverride
+  changed_when: false
+  failed_when: vms_statoverride.rc not in [0, 1]
+
+- name: Remove outdated bridge helper statoverride
+  ansible.builtin.command:
+    cmd: dpkg-statoverride --remove /usr/lib/qemu/qemu-bridge-helper
+  changed_when: true
+  when:
+    - vms_statoverride.rc == 0
+    - vms_statoverride.stdout != 'root ' ~ vms_run_user ~ ' 4750 /usr/lib/qemu/qemu-bridge-helper'
+
+- name: Setuid bridge helper for the VM run user
+  ansible.builtin.command:
+    cmd: >-
+      dpkg-statoverride --update --add
+      root {{ vms_run_user }} 4750 /usr/lib/qemu/qemu-bridge-helper
+  changed_when: true
+  when: vms_statoverride.stdout != 'root ' ~ vms_run_user ~ ' 4750 /usr/lib/qemu/qemu-bridge-helper'
+
+- name: Create qemu config directory
+  ansible.builtin.file:
+    path: /etc/qemu
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Write bridge ACL
+  ansible.builtin.template:
+    src: bridge.conf.j2
+    dest: /etc/qemu/bridge.conf
+    owner: root
+    group: root
+    mode: "0644"

@@ -1,0 +1,45 @@
+---
+
+# SPDX-FileCopyrightText: 2016 - 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+# SPDX-FileCopyrightText: 2020 - 2025 Uniklinik Köln
+# SPDX-FileCopyrightText: 2025 - 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+# Config changes are picked up on the VM's next restart; running
+# guests are never restarted by the role.
+- name: "Write qemu config for {{ vm_name }}"
+  ansible.builtin.template:
+    src: vm.cfg.j2
+    dest: "/etc/vms/{{ vm_name }}.cfg"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: "Create disk image for {{ vm_name }}"
+  ansible.builtin.command:
+    cmd: >-
+      qemu-img create -f qcow2
+      {{ vms_disk_dir }}/{{ vm_name }}.qcow2
+      {{ vm.disk_size | default('10G') }}
+    creates: "{{ vms_disk_dir }}/{{ vm_name }}.qcow2"
+
+- name: "Set disk image ownership for {{ vm_name }}"
+  ansible.builtin.file:
+    path: "{{ vms_disk_dir }}/{{ vm_name }}.qcow2"
+    owner: "{{ vms_run_user }}"
+    group: "{{ vms_admin_group }}"
+    mode: "0640"
+
+- name: "Enable VM {{ vm_name }}"
+  ansible.builtin.systemd_service:
+    name: "vm@{{ vm_name }}.service"
+    enabled: "{{ vm.autostart | default(true) }}"
+    state: "{{ 'started' if vm.autostart | default(true) else omit }}"
+
+- name: "Enable web console for {{ vm_name }}"
+  ansible.builtin.systemd_service:
+    name: "websockify@{{ vm_name }}.service"
+    enabled: "{{ vm.autostart | default(true) }}"
+    state: "{{ 'started' if vm.autostart | default(true) else omit }}"
+  when: vms_with_web_console | bool

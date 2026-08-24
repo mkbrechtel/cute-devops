@@ -1,0 +1,60 @@
+---
+
+# SPDX-FileCopyrightText: 2016 - 2026 Mirian Brechtel <markus.katharina.brechtel@thengo.net>
+# SPDX-FileCopyrightText: 2020 - 2025 Uniklinik Köln
+# SPDX-FileCopyrightText: 2025 - 2026 Goethe-University Frankfurt – Institute for Digital Medicine and Clinical Data Science
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+# The virtual machines, one entry per VM. All keys are optional:
+#
+# vms_instances:
+#   webtest:
+#     memory: "2G"          # guest RAM ([memory] size), default "1G"
+#     cpus: 2               # vCPUs ([smp-opts] cpus), default 1
+#     disk_size: "10G"      # qcow2 created under vms_disk_dir if missing
+#     networks: ["br-lan"]  # bridged NICs (needs vms_with_bridge);
+#                           # empty/absent -> one user-mode NIC
+#     mac: "52:54:00:aa:bb:cc"  # first NIC MAC; default derived from name
+#     autostart: true       # enable + start the unit, default true
+#     extra_config: ""      # raw lines appended to the qemu config file
+#
+# Removing an entry stops and disables the instance and removes its
+# config file. Disk images are never deleted.
+vms_instances: {}
+
+# Where disk images live
+vms_disk_dir: /var/lib/vms
+
+# System user qemu runs as (member of kvm)
+vms_run_user: vm-run
+
+# Group for humans operating VMs: console/QMP socket access and
+# start/stop/restart of vm@*.service via polkit
+vms_admin_group: vm-admin
+
+# Bridged networking via qemu-bridge-helper: setuid the helper for
+# vms_run_user and write the bridge ACL. Bridges must already exist.
+vms_with_bridge: false
+
+# Bridge names the helper may attach to ("all" allows any)
+vms_bridge_allow:
+  - all
+
+# Browser access to each VM's graphical console: per-VM VNC unix
+# socket, websockify bridge, noVNC client behind a Caddy vhost
+vms_with_web_console: false
+
+# Group the reverse proxy uses to reach the websocket sockets
+vms_https_socket_group: https-socket-access
+
+# Deploy a Caddy vhost fragment for the web console (requires a Caddy
+# that includes /etc/caddy/conf.d/*)
+vms_configure_caddy: true
+
+# Vhost the web console is served on
+vms_web_console_vhost: "vms.{{ hostname_name | default(ansible_hostname) }}.{{ domain | default(ansible_domain) }}"
+
+# Raw lines inserted at the top of the Caddy vhost, e.g. a
+# forward_auth block for oauth2-proxy
+vms_caddy_extra: ""
