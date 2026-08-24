@@ -86,6 +86,33 @@ resource limits) applies to VMs unchanged.
     pairs naming different bridges. Taps are created with vnet
     headers (`--use-vnet`, added by qemu automatically for virtio) —
     required for GSO/checksum offload throughput.
+- **Web console** (`vms_with_web_console: false` default). Browser
+  access to each VM's graphical console, same router shape as
+  [ttyd](ttyd.feature.md) / [code-server](code-server.feature.md) —
+  unix sockets only, no TCP ports anywhere:
+  - Each VM's config gains `[vnc]` on a unix socket
+    (`/run/vms/<name>/vnc` — `[vnc]` is a verified `-readconfig`
+    group), reachable only by `vm-run`/`vm-admin` like the other
+    sockets.
+  - A `websockify@.service` template instance per VM
+    (`PartOf=vm@%i.service`) bridges it to a websocket unix socket:
+    `websockify --unix-listen=/run/vms/%i/websock
+    --unix-listen-mode=0660 --unix-target=/run/vms/%i/vnc`
+    (unix-listen verified in trixie's websockify 0.12.0 — the
+    release that added it). The socket is owned
+    `vm-run:https-socket-access` so the reverse proxy can connect —
+    the same socket-group pattern as ttyd. The run dir
+    stays `0750 vm-run:vm-admin`; `https-socket-access` gets a
+    traverse-only ACL on it (one `ExecStartPre=+setfacl` line in
+    `websockify@`).
+  - **Single vhost** `vms.<host>` (configurable): serves the static
+    noVNC client (Debian `novnc` package), proxies
+    `/<name>/websock` to that VM's socket, oauth2-proxy
+    forward_auth in front. One vhost, N VMs — path routing by VM
+    name, since any authorized operator may open any console
+    (matching the `vm-admin` trust model).
+  - Caddy-fragment auto-deploy option like ttyd
+    (`vms_configure_caddy`).
 - **Lifecycle.** The role enables/starts `vm@<name>` per instance,
   honoring a per-VM `autostart` flag.
 
@@ -181,6 +208,13 @@ is consistent: `vm-admin` administers VMs, full stop.
 - qemu's default NIC MAC is identical for every VM — `vms_instances`
   entries carry a fixed `mac`, or the role derives a stable one from
   the VM name.
+- The web console uses the same ingredients as Debian's
+  `qemu-web-desktop` (DARTS: qemu + websockify + noVNC) but composed
+  our way: DARTS is a session-oriented web app spawning ephemeral
+  desktop VMs behind its own Apache/Perl/dnsmasq stack; here the VMs
+  are declarative systemd services and the console is just another
+  group-owned socket behind the existing reverse-proxy +
+  oauth2-proxy pattern.
 
 ## Open questions
 
