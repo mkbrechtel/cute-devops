@@ -33,6 +33,10 @@ vms_run_user: vm-run
 # start/stop/restart of vm@*.service via polkit
 vms_admin_group: vm-admin
 
+# Register running VMs with systemd-machined so `machinectl list`
+# gives an overview of them (installs systemd-container)
+vms_with_machined: false
+
 # Bridged networking via qemu-bridge-helper: setuid the helper for
 # vms_run_user and write the bridge ACL. Bridges must already exist.
 vms_with_bridge: false

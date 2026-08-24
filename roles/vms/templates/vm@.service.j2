@@ -24,6 +24,11 @@ UMask=0007
 RuntimeDirectory=vms/%i
 RuntimeDirectoryMode=0750
 ExecStart=/usr/bin/qemu-system-x86_64 -nodefaults -display none -cpu host -name %i -readconfig /etc/vms/%i.cfg
+{% if vms_with_machined | bool %}
+# register with systemd-machined for `machinectl list`; unregisters
+# itself when qemu exits
+ExecStartPost=-+/usr/bin/busctl call org.freedesktop.machine1 /org/freedesktop/machine1 org.freedesktop.machine1.Manager RegisterMachine sayssus %i 0 vms vm $MAINPID ""
+{% endif %}
 ExecStop=/usr/local/lib/vms/vm-powerdown /run/vms/%i/qmp
 TimeoutStopSec=120
 Restart=on-failure

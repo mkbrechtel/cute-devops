@@ -11,6 +11,12 @@
     name: qemu-system-x86
     state: present
 
+- name: Install machined
+  ansible.builtin.apt:
+    name: systemd-container
+    state: present
+  when: vms_with_machined | bool
+
 - name: Create VM admin group
   ansible.builtin.group:
     name: "{{ vms_admin_group }}"

@@ -46,6 +46,16 @@ socat - UNIX-CONNECT:/run/vms/webtest/console
 QMP; qemu exits when the guest halts. `TimeoutStopSec=120` is the
 backstop for guests that ignore ACPI.
 
+**Overview of running VMs.** `systemctl list-units 'vm@*'` is the
+native inventory. `vms_with_machined: true` additionally registers
+each running VM with `systemd-machined` (one `RegisterMachine` call
+from the unit; machined unregisters it when qemu exits), so
+`machinectl list` shows VMs alongside containers — the standard
+answer to "what machines are running on this host". The
+machined-native future here is `systemd-vmspawn` (systemd's own qemu
+launcher, systemd ≥ 255); when it matures, `vm@.service` execing
+vmspawn would inherit that integration wholesale.
+
 **The systemd toolbox is the VM toolbox.** `systemctl status
 vm@webtest`, `journalctl -u vm@webtest`, `MemoryMax=`/`CPUQuota=` via
 a `vm@webtest.service.d/` drop-in instead of hypervisor tunables.

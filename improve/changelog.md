@@ -23,9 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `-readconfig` file under `/etc/vms/`. Per-VM run dir with QMP and serial
   console sockets, graceful ACPI shutdown, `vm-run`/`vm-admin` access model
   with polkit-based unit control, optional bridged networking via a scoped
-  setuid `qemu-bridge-helper` (`vms_with_bridge`), and an optional noVNC
+  setuid `qemu-bridge-helper` (`vms_with_bridge`), an optional noVNC
   web console over unix sockets behind a Caddy vhost
-  (`vms_with_web_console`). Documented in `docs/features/vms.md`
+  (`vms_with_web_console`), and optional machined registration for a
+  `machinectl list` overview (`vms_with_machined`). Documented in
+  `docs/features/vms.md`
 - `logind` role: configures `systemd-logind` session retention via a drop-in,
   keeping a user's `user@<uid>.service` manager and `/run/user/<uid>` alive
   for `UserStopDelaySec=72h` after their last logout instead of the stock 10

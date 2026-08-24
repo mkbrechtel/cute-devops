@@ -50,6 +50,9 @@ See `defaults/main.yml` for all variables and defaults.
 - `vms_admin_group` (default: `vm-admin`) - members get the console
   and QMP sockets and may start/stop/restart `vm@*.service` via
   polkit
+- `vms_with_machined` (default: `false`) - register running VMs with
+  `systemd-machined`, so `machinectl list` gives an overview of them
+  (installs `systemd-container`)
 - `vms_with_bridge` (default: `false`) - bridged NICs via
   `qemu-bridge-helper`: setuid `4750 root:vm-run` via
   `dpkg-statoverride`, ACL in `/etc/qemu/bridge.conf`
@@ -79,6 +82,9 @@ See `defaults/main.yml` for all variables and defaults.
   `TimeoutStopSec=120` is the backstop.
 - A hand-written `/etc/vms/<name>.cfg` works identically:
   `systemctl start vm@<name>` just runs it.
+- VM names should be hostname-like (letters, digits, dashes): they
+  become unit instances, socket paths, web console paths and — with
+  `vms_with_machined` — machine names.
 - Installing an OS is not this role's job: boot an installer ISO via
   `extra_config` (a `[drive]` with `media = "cdrom"`), or provision
   images externally.
